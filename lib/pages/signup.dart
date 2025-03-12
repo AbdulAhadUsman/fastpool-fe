@@ -297,13 +297,20 @@ class _SignUpState extends State<SignUp> {
                       ),
                       // Right Divider
                       Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade700,
-                          thickness: 1.5,
-                          indent: screenWidth * 0.025,
-                          endIndent: screenWidth * 0.05,
+                          child: Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xA4A4A4A4), Colors.transparent],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
                         ),
-                      ),
+                        margin: EdgeInsets.only(
+                          left: screenWidth * 0.025,
+                          right: screenWidth * 0.05,
+                        ),
+                      )),
                     ],
                   ),
                 ),
