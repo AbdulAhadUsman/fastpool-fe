@@ -47,7 +47,7 @@ class _MyTextFieldState extends State<MyTextField> {
         Text(
           widget.hintText,
           style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textColor,
               fontFamily: 'Poppins',
               fontSize: screenWidth * 0.04),
         ),
