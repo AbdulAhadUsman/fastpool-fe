@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   static const Color primaryColor = Color(0x1E1E1E1E);
-  static const Color gradient = Color(0xA4A4A4A4);
+  static const Color textColor = Color.fromARGB(163, 206, 206, 206);
   static const Color backgroundColor = Color(0xFF111328);
   static const Color whiteColor = Colors.white;
   static const List<Color> textFieldColor = [
@@ -17,4 +17,5 @@ class AppColors {
   ];
   static const Color cursorColor = Color(0xFFA4A4A4);
   static const Color focusedBorderColor = Colors.blue;
+  static const Color logoColor = Color(0xff549CE4);
 }
