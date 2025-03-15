@@ -1,5 +1,6 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
+import 'package:fastpool_fe/pages/signup.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -113,11 +114,20 @@ class _LoginState extends State<Login> {
                       controller: emailController,
                       hintText: 'Email',
                       obscureText: false,
+                      hasPrefixIcon: true,
                       prefixIcon: Icon(
                         Icons.mail,
                         color: const Color.fromARGB(255, 186, 186, 186),
                       ),
-                      hasPrefixIcon: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                          return 'Please enter a valid email address';
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     MyTextField(
@@ -138,6 +148,15 @@ class _LoginState extends State<Login> {
                           });
                         },
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (value != passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: screenHeight * 0.01),
                     Row(
@@ -151,7 +170,7 @@ class _LoginState extends State<Login> {
                                 fontSize: screenWidth * 0.04),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                print("forgot passwrod");
+                                print("forgot password");
                               },
                           ),
                         ),
@@ -161,8 +180,7 @@ class _LoginState extends State<Login> {
                     GestureDetector(
                       onTap: () {
                         if (_formKey.currentState!.validate()) {
-                          print("Sign Up");
-                          // Ensure selected gender is printed
+                          print("Login");
                         }
                       },
                       child: Container(
@@ -179,7 +197,7 @@ class _LoginState extends State<Login> {
                         ),
                         child: Center(
                           child: Text(
-                            "Sign Up",
+                            "Login",
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: screenWidth * 0.045,
@@ -226,6 +244,11 @@ class _LoginState extends State<Login> {
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
                                       print("Sign up");
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) => SignUp()),
+                                      );
                                     },
                                 ),
                               ],

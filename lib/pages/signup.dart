@@ -1,6 +1,7 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/gender_selection.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
+import 'package:fastpool_fe/pages/login.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -290,6 +291,12 @@ class _SignUpState extends State<SignUp> {
                               recognizer: TapGestureRecognizer()
                                 ..onTap = () {
                                   print("Sign-in");
+                                  //routing to signin
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Login()),
+                                  );
                                 },
                             ),
                           ],
