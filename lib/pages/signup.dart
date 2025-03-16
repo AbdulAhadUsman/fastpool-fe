@@ -224,9 +224,7 @@ class _SignUpState extends State<SignUp> {
                       _validateGender = true;
                     });
                     if (_formKey.currentState!.validate()) {
-                      print("Sign Up");
-                      print(
-                          selectedGender); // Ensure selected gender is printed
+                      print("Sign Up"); // Ensure selected gender is printed
                     }
                   },
                   child: Container(

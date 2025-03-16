@@ -1,6 +1,7 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
 import 'package:fastpool_fe/pages/signup.dart';
+import 'package:fastpool_fe/pages/forgotPassword.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -170,7 +171,11 @@ class _LoginState extends State<Login> {
                                 fontSize: screenWidth * 0.04),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                print("forgot password");
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ForgotPassword()),
+                                );
                               },
                           ),
                         ),
