@@ -1,22 +1,20 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
 import 'package:fastpool_fe/pages/signup.dart';
-import 'package:fastpool_fe/pages/forgotPassword.dart';
-import 'package:fastpool_fe/pages/verifyAccount.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class ForgotPassword extends StatefulWidget {
-  const ForgotPassword({super.key});
+class resetAccount extends StatefulWidget {
+  const resetAccount({super.key});
 
   @override
-  State<ForgotPassword> createState() => _ForgotPasswordState();
+  State<resetAccount> createState() => _resetAccountState();
 }
 
-class _ForgotPasswordState extends State<ForgotPassword> {
+class _resetAccountState extends State<resetAccount> {
   final _formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
+  final otpController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +42,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               MainAxisAlignment.center, // Center the text
                           children: [
                             Text(
-                              "Forgot Password?",
+                              "Verify Account",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: MediaQuery.of(context).size.width *
@@ -62,72 +60,28 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       SizedBox(
                         height: 3,
                       ),
-                      Text('Enter your Email to get a reset link',
-                          style: TextStyle(
-                            color: AppColors.textColor,
-                            fontSize: screenWidth * 0.035,
-                            fontFamily: 'Poppins',
-                          )),
+                      Text(
+                        'You been emailed a code on the provided email. Please enter it below to verify yourself',
+                        style: TextStyle(
+                          color: AppColors.textColor,
+                          fontSize: screenWidth * 0.035,
+                          fontFamily: 'Poppins',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                       SizedBox(height: screenHeight * 0.04),
                       MyTextField(
-                        controller: emailController,
-                        hintText: 'Email',
+                        controller: otpController,
+                        hintText: 'Code',
                         obscureText: false,
-                        hasPrefixIcon: true,
-                        prefixIcon: Icon(
-                          Icons.mail,
-                          color: const Color.fromARGB(255, 186, 186, 186),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
                       ),
                       SizedBox(height: screenHeight * 0.03),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
                             onTap: () {
-                              print("cancel");
-                              Navigator.pop(context); //go back to login
-                            },
-                            child: Container(
-                              height: screenHeight * 0.06,
-                              margin: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.01),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.09),
-                              decoration: BoxDecoration(
-                                color: AppColors.CancelButton,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "Cancel",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.045,
-                                      fontFamily: 'Poppins'),
-                                ),
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              if (_formKey.currentState!.validate()) {
-                                print("Reset");
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => resetAccount()),
-                                );
-                              }
+                              print("Verify");
                             },
                             child: Container(
                               height: screenHeight * 0.06,
@@ -143,7 +97,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               ),
                               child: Center(
                                 child: Text(
-                                  "Reset",
+                                  "Verify",
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.045,
