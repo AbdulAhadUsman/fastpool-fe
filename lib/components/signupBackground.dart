@@ -7,7 +7,7 @@ class Signupbackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: SvgPicture.asset("lib/images/signup.svg", fit: BoxFit.cover),
+      child: SvgPicture.asset("assets/images/signup.svg", fit: BoxFit.cover),
     );
   }
 }

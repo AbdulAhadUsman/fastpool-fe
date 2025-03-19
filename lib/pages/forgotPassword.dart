@@ -1,5 +1,6 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
+import 'package:fastpool_fe/pages/resetPassword.dart';
 import 'package:fastpool_fe/pages/signup.dart';
 import 'package:fastpool_fe/pages/forgotPassword.dart';
 import 'package:fastpool_fe/pages/verifyAccount.dart';
@@ -22,6 +23,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
+    bool isValidEmail = false;
     return Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
@@ -85,6 +87,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                           if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                             return 'Please enter a valid email address';
                           }
+                          isValidEmail = true;
                           return null;
                         },
                       ),
@@ -102,7 +105,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               margin: EdgeInsets.symmetric(
                                   horizontal: screenWidth * 0.01),
                               padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.09),
+                                  horizontal: screenWidth * 0.11),
                               decoration: BoxDecoration(
                                 color: AppColors.CancelButton,
                                 borderRadius: BorderRadius.circular(10),
@@ -122,11 +125,13 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                             onTap: () {
                               if (_formKey.currentState!.validate()) {
                                 print("Reset");
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => resetAccount()),
-                                );
+                                if (isValidEmail) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => Resetpassword()),
+                                  );
+                                }
                               }
                             },
                             child: Container(
@@ -134,7 +139,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               margin: EdgeInsets.symmetric(
                                   horizontal: screenWidth * 0.01),
                               padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.09),
+                                  horizontal: screenWidth * 0.11),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                     colors: AppColors.buttonColor,
@@ -143,7 +148,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                               ),
                               child: Center(
                                 child: Text(
-                                  "Reset",
+                                  "Get Link",
                                   style: TextStyle(
                                       color: Colors.white,
                                       fontSize: screenWidth * 0.045,

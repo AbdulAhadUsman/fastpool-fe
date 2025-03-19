@@ -14,7 +14,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  final _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -22,6 +22,8 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
+    bool isValidEmail = false;
+    bool isValidPassword = false;
     return Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
@@ -127,6 +129,7 @@ class _LoginState extends State<Login> {
                         if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                           return 'Please enter a valid email address';
                         }
+                        isValidEmail = true;
                         return null;
                       },
                     ),
@@ -156,6 +159,7 @@ class _LoginState extends State<Login> {
                         if (value != passwordController.text) {
                           return 'Passwords do not match';
                         }
+                        isValidPassword = true;
                         return null;
                       },
                     ),
@@ -185,7 +189,17 @@ class _LoginState extends State<Login> {
                     GestureDetector(
                       onTap: () {
                         if (_formKey.currentState!.validate()) {
+                          print("Before Validation: ${_formKey.currentState}");
                           print("Login");
+                          bool check = _formKey.currentState!.validate();
+                          print(check);
+                          // return;
+                          if (isValidPassword && isValidEmail) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => SignUp()),
+                            );
+                          }
                         }
                       },
                       child: Container(

@@ -27,6 +27,11 @@ class _SignUpState extends State<SignUp> {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
+    bool isValidUsername = false;
+    bool isValidEmail = false;
+    bool isValidPhone = false;
+    bool isValidPassword = false;
+    bool isValidConfirmPassword = false;
 
     return Container(
       decoration: const BoxDecoration(
@@ -83,6 +88,7 @@ class _SignUpState extends State<SignUp> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your username';
                       }
+                      isValidUsername = true;
                       return null;
                     },
                   ),
@@ -131,6 +137,7 @@ class _SignUpState extends State<SignUp> {
                       if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                         return 'Please enter a valid email address';
                       }
+                      isValidEmail = true;
                       return null;
                     },
                   ),
@@ -151,6 +158,7 @@ class _SignUpState extends State<SignUp> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your phone number';
                       }
+                      isValidPhone = true;
                       return null;
                     },
                   ),
@@ -181,6 +189,7 @@ class _SignUpState extends State<SignUp> {
                       if (value.length < 6) {
                         return 'Password must be at least 6 characters long';
                       }
+                      isValidPassword = true;
                       return null;
                     },
                   ),
@@ -212,6 +221,7 @@ class _SignUpState extends State<SignUp> {
                       if (value != passwordController.text) {
                         return 'Passwords do not match';
                       }
+                      isValidConfirmPassword = true;
                       return null;
                     },
                   ),
@@ -224,7 +234,20 @@ class _SignUpState extends State<SignUp> {
                       _validateGender = true;
                     });
                     if (_formKey.currentState!.validate()) {
-                      print("Sign Up"); // Ensure selected gender is printed
+                      print("Sign Up");
+                      print(
+                          selectedGender); // Ensure selected gender is printed
+                      if (isValidUsername &&
+                          isValidEmail &&
+                          isValidPhone &&
+                          isValidPassword &&
+                          isValidConfirmPassword &&
+                          _validateGender) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => Login()),
+                        );
+                      }
                     }
                   },
                   child: Container(
