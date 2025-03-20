@@ -1,9 +1,29 @@
 import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/signup.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io';
 
-void main() {
-  runApp(const MyApp());
+// void checkEnvFile() async {
+//   final scriptDir = File(Platform.resolvedExecutable).parent.path;
+//   final file = File('$scriptDir/.env');
+
+//   if (await file.exists()) {
+//     print('.env file exists at ${file.path}');
+//   } else {
+//     print('.env file NOT FOUND at ${file.path}');
+//   }
+// }
+
+// void checkWorkingDirectory() {
+//   print('Current working directory: ${Directory.current.path}');
+// }
+
+Future<void> main() async {
+  // checkEnvFile();
+  // checkWorkingDirectory();
+  // await dotenv.load(fileName: ".env"); // Load .env file
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

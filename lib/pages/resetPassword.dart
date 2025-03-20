@@ -2,10 +2,8 @@ import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
 import 'package:fastpool_fe/pages/signup.dart';
 import 'package:fastpool_fe/pages/forgotPassword.dart';
-import 'package:fastpool_fe/pages/verifyAccount.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class Resetpassword extends StatefulWidget {
   const Resetpassword({super.key});
@@ -16,9 +14,6 @@ class Resetpassword extends StatefulWidget {
 
 class _ResetPasswordState extends State<Resetpassword> {
   final _formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
-  final usernameController = TextEditingController();
-  final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
@@ -151,7 +146,7 @@ class _ResetPasswordState extends State<Resetpassword> {
                           bool check = _formKey.currentState!.validate();
                           print(check);
                           // return;
-                          if (isValidPassword) {
+                          if (isValidPassword && isValidConfirmPassword) {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (context) => SignUp()),

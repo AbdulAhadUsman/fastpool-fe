@@ -1,9 +1,15 @@
+import 'dart:convert';
+
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/gender_selection.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
+import 'package:fastpool_fe/constants/api.dart';
 import 'package:fastpool_fe/pages/login.dart';
+import 'package:fastpool_fe/pages/verifyAccount.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
 
 class SignUp extends StatefulWidget {
   SignUp({super.key});
@@ -22,6 +28,51 @@ class _SignUpState extends State<SignUp> {
 
   String selectedGender = "";
   bool _validateGender = false;
+
+  void postData(
+      {String username = "",
+      String email = "",
+      String gender = "",
+      String phone = "",
+      String password = ""}) async {
+    String current_api = api + 'users/signup/';
+
+    print('in the post data function');
+    try {
+      http.Response response = await http.post(Uri.parse(current_api),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode({
+            'username': username,
+            'email': email,
+            'gender': gender,
+            'phone': phone,
+            'password': password,
+          }));
+      print('request sent');
+      if (response.statusCode == 200) {
+        print('redirecting');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => verifyAccount(
+                    username: username,
+                    gender: gender,
+                    phone: phone,
+                    email: email,
+                    password: password,
+                  )),
+        );
+      } else {
+        print('different status code');
+        print(response.statusCode);
+      }
+    } catch (e) {
+      print('in the catch block');
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -243,10 +294,12 @@ class _SignUpState extends State<SignUp> {
                           isValidPassword &&
                           isValidConfirmPassword &&
                           _validateGender) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => Login()),
-                        );
+                        postData(
+                            username: usernameController.text,
+                            email: emailController.text,
+                            gender: selectedGender,
+                            phone: phoneController.text,
+                            password: passwordController.text);
                       }
                     }
                   },
