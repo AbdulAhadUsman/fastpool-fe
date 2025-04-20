@@ -19,4 +19,10 @@ class AppColors {
   static const Color focusedBorderColor = Colors.blue;
   static const Color logoColor = Color(0xff549CE4);
   static const Color CancelButton = Color(0xA4A4A4A4);
+  static const List<Color> infoCardColor = [
+    Color.fromARGB(179, 83, 156, 228),
+    Color.fromARGB(20, 204, 88, 84),
+    Color.fromARGB(255, 84, 156, 228),
+  ];
+  static const List<double> infoCardGradientStops = [0.0, 0.77, 1.0];
 }
