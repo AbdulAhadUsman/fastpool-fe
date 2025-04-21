@@ -2,7 +2,8 @@ import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
 
 class Driver {
-  String name;
+  String firstName;
+  String lastName;
   String password;
   String phone;
   String email;
@@ -13,7 +14,8 @@ class Driver {
   Vehicle vehicle;
 
   Driver({
-    required this.name,
+    required this.firstName,
+    required this.lastName,
     required this.password,
     required this.phone,
     required this.email,
@@ -50,12 +52,13 @@ class DriverProfileScreen extends StatefulWidget {
 
 class _DriverProfileScreenState extends State<DriverProfileScreen> {
   final Driver driver = Driver(
-    name: "Shariq Munir",
+    firstName: "Shariq",
+    lastName: "Munir",
     password: "********",
     phone: "1234–5678911",
     email: "l226680@lhr.nu.edu.pk",
     gender: "Male",
-    profileImage: "",
+    profileImage: "assets/images/Sign-up.png",
     rides: 1900,
     rating: 4.8,
     vehicle: Vehicle(
@@ -78,7 +81,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     // Initialize driver
 
     // Create controllers
-    controllers["name"] = TextEditingController(text: driver.name);
+    controllers["firstname"] = TextEditingController(text: driver.firstName);
+    controllers["lastName"] = TextEditingController(text: driver.lastName);
     controllers["password"] = TextEditingController(text: driver.password);
     controllers["phone"] = TextEditingController(text: driver.phone);
     controllers["email"] = TextEditingController(text: driver.email);
@@ -106,6 +110,108 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     });
   }
 
+  void _showEditNameDialog(BuildContext context) {
+    final firstNameController = TextEditingController(text: driver.firstName);
+    final lastNameController = TextEditingController(text: driver.lastName);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // prevents dialog from closing on tap outside
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.black.withOpacity(0.8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('First Name',
+                              style: TextStyle(color: Colors.white)),
+                          const SizedBox(height: 5),
+                          TextField(
+                            controller: firstNameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.grey[850],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Last Name',
+                              style: TextStyle(color: Colors.white)),
+                          const SizedBox(height: 5),
+                          TextField(
+                            controller: lastNameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.grey[850],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey,
+                        ),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text("Cancel"),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            driver.firstName = firstNameController.text;
+                            driver.lastName = lastNameController.text;
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: const Text("Confirm"),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -130,7 +236,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                         backgroundImage: AssetImage(driver.profileImage),
                       ),
                       const SizedBox(height: 10),
-                      Text(driver.name,
+                      Text(driver.firstName + " " + driver.lastName,
                           style: const TextStyle(
                               color: Colors.white, fontSize: 22)),
                       const SizedBox(height: 6),
@@ -193,14 +299,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                 Expanded(
                                   child: Padding(
                                     padding: const EdgeInsets.only(left: 45),
-                                    child: Text(driver.name,
+                                    child: Text(
+                                        driver.firstName +
+                                            " " +
+                                            driver.lastName,
                                         style: const TextStyle(
                                             color: Colors.white70,
                                             fontSize: 14)),
                                   ),
                                 ),
                                 IconButton(
-                                    onPressed: () {},
+                                    onPressed: () =>
+                                        _showEditNameDialog(context),
                                     icon: Icon(Icons.edit,
                                         color: Colors.white38, size: 18)),
                               ]),
