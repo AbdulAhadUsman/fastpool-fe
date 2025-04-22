@@ -462,6 +462,30 @@ class _RiderProfileState extends State<RiderProfile> {
   //   return status.isGranted;
   // }
 
+  final List<BottomNavigationBarItem> _bottomNavItems = const [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.home),
+      label: 'Home',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.directions_car),
+      label: 'Rides',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.add_circle, size: 30), // Moved "New Ride" here
+      label: 'New Ride',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person_search), // Moved "Requests" here
+      label: 'Requests',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person),
+      label: 'Profile',
+    ),
+  ];
+  int _currentIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -472,7 +496,7 @@ class _RiderProfileState extends State<RiderProfile> {
           ),
         ),
         child: Scaffold(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.backgroundColor,
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(children: [
@@ -546,9 +570,13 @@ class _RiderProfileState extends State<RiderProfile> {
                           children: [
                             // Adjusted spacing to ensure uniformity between all fields
                             Row(children: [
-                              Icon(
-                                Icons.person,
-                                color: Colors.white,
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 8.0), // Consistent padding for icons
+                                child: Icon(
+                                  Icons.person,
+                                  color: Colors.white,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text("Name:",
@@ -572,9 +600,13 @@ class _RiderProfileState extends State<RiderProfile> {
                             ]),
                             const SizedBox(height: 12),
                             Row(children: [
-                              Icon(
-                                Icons.lock,
-                                color: Colors.white,
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 8.0), // Consistent padding for icons
+                                child: Icon(
+                                  Icons.lock,
+                                  color: Colors.white,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text("Password:",
@@ -598,9 +630,13 @@ class _RiderProfileState extends State<RiderProfile> {
                             ]),
                             const SizedBox(height: 12),
                             Row(children: [
-                              Icon(
-                                Icons.phone,
-                                color: Colors.white,
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 8.0), // Consistent padding for icons
+                                child: Icon(
+                                  Icons.phone,
+                                  color: Colors.white,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text("Phone:",
@@ -625,9 +661,14 @@ class _RiderProfileState extends State<RiderProfile> {
                             const SizedBox(height: 16),
                             Row(
                               children: [
-                                Icon(
-                                  Icons.mail,
-                                  color: Colors.white,
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left:
+                                          8.0), // Consistent padding for icons
+                                  child: Icon(
+                                    Icons.mail,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Text("Email:",
@@ -648,11 +689,15 @@ class _RiderProfileState extends State<RiderProfile> {
                             ),
                             const SizedBox(height: 20),
                             Row(children: [
-                              Icon(
-                                rider.gender.toLowerCase() == "male"
-                                    ? Icons.male
-                                    : Icons.female,
-                                color: Colors.white,
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 8.0), // Consistent padding for icons
+                                child: Icon(
+                                  rider.gender.toLowerCase() == "male"
+                                      ? Icons.male
+                                      : Icons.female,
+                                  color: Colors.white,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Text("Gender:",
@@ -680,20 +725,33 @@ class _RiderProfileState extends State<RiderProfile> {
               ]),
             ),
           ),
-
-          // Bottom Navigation Bar
-          bottomNavigationBar: BottomNavigationBar(
-            backgroundColor: const Color(0xFF1A1A1A),
-            selectedItemColor: Colors.blueAccent,
-            unselectedItemColor: Colors.grey,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.directions_car), label: ""),
-              BottomNavigationBarItem(icon: Icon(Icons.add), label: ""),
-              BottomNavigationBarItem(icon: Icon(Icons.message), label: ""),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
-            ],
+          bottomNavigationBar: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(
+                  0xFF1F1F1F), // Matches the card background gradient
+              borderRadius: BorderRadius.circular(30), // Rounded edges
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                  30), // Ensures content follows rounded edges
+              child: BottomNavigationBar(
+                currentIndex: _currentIndex,
+                onTap: (index) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                  // Add navigation logic here
+                },
+                items: _bottomNavItems,
+                selectedItemColor: Colors.blue, // Changed to blue
+                unselectedItemColor:
+                    Colors.white70, // Slightly faded white for unselected items
+                backgroundColor:
+                    Colors.transparent, // Transparent to match container
+                type: BottomNavigationBarType.fixed,
+              ),
+            ),
           ),
         ));
   }
