@@ -1,3 +1,4 @@
+import 'package:fastpool_fe/components/DriverNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
 
@@ -224,7 +225,7 @@ class _DriverProfileState extends State<DriverProfile> {
       barrierDismissible: false, // prevents dialog from closing on tap outside
       builder: (context) {
         return Dialog(
-          backgroundColor: Colors.black.withOpacity(0.8),
+          backgroundColor: Colors.grey[900],
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -244,7 +245,7 @@ class _DriverProfileState extends State<DriverProfile> {
                           const SizedBox(height: 5),
                           TextField(
                             controller: firstNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: AppColors.textColor),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey[850],
@@ -266,7 +267,7 @@ class _DriverProfileState extends State<DriverProfile> {
                           const SizedBox(height: 5),
                           TextField(
                             controller: lastNameController,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: AppColors.textColor),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey[850],
@@ -291,12 +292,18 @@ class _DriverProfileState extends State<DriverProfile> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: const Text("Cancel"),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                        ),
                         onPressed: () {
                           setState(() {
                             driver.firstName = firstNameController.text;
@@ -304,7 +311,10 @@ class _DriverProfileState extends State<DriverProfile> {
                           });
                           Navigator.pop(context);
                         },
-                        child: const Text("Confirm"),
+                        child: const Text(
+                          "Confirm",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                   ],
@@ -350,7 +360,7 @@ class _DriverProfileState extends State<DriverProfile> {
                         TextField(
                           controller: passwordController,
                           obscureText: !isPasswordVisible,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(color: Colors.grey),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.grey[850],
@@ -422,12 +432,18 @@ class _DriverProfileState extends State<DriverProfile> {
                             onPressed: () {
                               Navigator.pop(context);
                             },
-                            child: const Text("Cancel"),
+                            child: const Text(
+                              "Cancel",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                            ),
                             onPressed: () {
                               if (passwordController.text ==
                                   confirmPasswordController.text) {
@@ -440,7 +456,10 @@ class _DriverProfileState extends State<DriverProfile> {
                                 // Handle password mismatch (optional)
                               }
                             },
-                            child: const Text("Confirm"),
+                            child: const Text(
+                              "Confirm",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ),
                       ],
@@ -483,7 +502,7 @@ class _DriverProfileState extends State<DriverProfile> {
                           const SizedBox(height: 5),
                           TextField(
                             controller: phoneController,
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.grey),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey[850],
@@ -508,19 +527,28 @@ class _DriverProfileState extends State<DriverProfile> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        child: const Text("Cancel"),
+                        child: const Text(
+                          "Cancel",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                        ),
                         onPressed: () {
                           setState(() {
                             driver.phone = phoneController.text;
                           });
                           Navigator.pop(context);
                         },
-                        child: const Text("Confirm"),
+                        child: const Text(
+                          "Confirm",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                   ],
@@ -578,7 +606,7 @@ class _DriverProfileState extends State<DriverProfile> {
                       TextField(
                         controller: nameController,
                         style: const TextStyle(
-                            color: Colors.white), // Match text color
+                            color: Colors.grey), // Updated inside text to grey
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey[850], // Match fill color
@@ -599,7 +627,7 @@ class _DriverProfileState extends State<DriverProfile> {
                       TextField(
                         controller: regController,
                         style: const TextStyle(
-                            color: Colors.white), // Match text color
+                            color: AppColors.textColor), // Match text color
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey[850], // Match fill color
@@ -736,7 +764,12 @@ class _DriverProfileState extends State<DriverProfile> {
                                     Colors.grey, // Match button color
                               ),
                               onPressed: () => Navigator.pop(context),
-                              child: const Text("Cancel"),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(
+                                    color:
+                                        Colors.white), // Button text is white
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -759,7 +792,12 @@ class _DriverProfileState extends State<DriverProfile> {
                                 this.setState(() {}); // Refresh the page
                                 Navigator.pop(context);
                               },
-                              child: const Text("Confirm"),
+                              child: const Text(
+                                "Confirm",
+                                style: TextStyle(
+                                    color:
+                                        Colors.white), // Button text is white
+                              ),
                             ),
                           ),
                         ],
@@ -782,501 +820,407 @@ class _DriverProfileState extends State<DriverProfile> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/Sign-up.png'),
-            fit: BoxFit.cover,
+    return Scaffold(
+        backgroundColor: AppColors.backgroundColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                // Profile Picture & Stats
+                Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 45,
+                      backgroundImage: AssetImage(driver.profileImage),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(driver.firstName + " " + driver.lastName,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 22)),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text("${driver.rides} Rides",
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 14)),
+                        const SizedBox(width: 20),
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const SizedBox(width: 4),
+                        Text("${driver.rating}",
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 14)),
+                      ],
+                    )
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Profile Info Card
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 8,
+                    margin: EdgeInsets.zero,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF3A3A3A),
+                            Color(0xFF1F1F1F),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            // Adjusted spacing to ensure uniformity between all fields
+                            Row(children: [
+                              Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 12),
+                              Text("Name:",
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 45),
+                                  child: Text(
+                                      driver.firstName + " " + driver.lastName,
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 14)),
+                                ),
+                              ),
+                              IconButton(
+                                  onPressed: () => _showEditNameDialog(context),
+                                  icon: Icon(Icons.edit,
+                                      color: Colors.white38, size: 18)),
+                            ]),
+                            const SizedBox(height: 12),
+                            Row(children: [
+                              Icon(
+                                Icons.lock,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 12),
+                              Text("Password:",
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: Text(driver.password,
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 14)),
+                                ),
+                              ),
+                              IconButton(
+                                  onPressed: () =>
+                                      _showEditPasswordDialog(context),
+                                  icon: Icon(Icons.edit,
+                                      color: Colors.white38, size: 18)),
+                            ]),
+                            const SizedBox(height: 12),
+                            Row(children: [
+                              Icon(
+                                Icons.phone,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 12),
+                              Text("Phone:",
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 41),
+                                  child: Text(driver.phone,
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 14)),
+                                ),
+                              ),
+                              IconButton(
+                                  onPressed: () =>
+                                      _showEditPhoneDialog(context),
+                                  icon: Icon(Icons.edit,
+                                      color: Colors.white38, size: 18)),
+                            ]),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.mail,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 12),
+                                Text("Email:",
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 47),
+                                    child: Text(driver.email,
+                                        style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Row(children: [
+                              Icon(
+                                driver.gender.toLowerCase() == "male"
+                                    ? Icons.male
+                                    : Icons.female,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 12),
+                              Text("Gender:",
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 38),
+                                  child: Text(driver.gender,
+                                      style: const TextStyle(
+                                          color: Colors.white70, fontSize: 14)),
+                                ),
+                              ),
+                            ]),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Divider between Profile Info and Vehicle Info
+                const Divider(
+                  color: Colors.white24,
+                  thickness: 1,
+                  indent: 16,
+                  endIndent: 16,
+                ),
+
+                const SizedBox(height: 16),
+
+                // Vehicle Info Card
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        "Vehicles Info",
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: vehicleList.length,
+                      itemBuilder: (context, index) {
+                        final vehicle = vehicleList[index];
+                        return StatefulBuilder(
+                          builder: (context, setState) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 8,
+                                margin: EdgeInsets.zero,
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFF3A3A3A),
+                                        Color(0xFF1F1F1F),
+                                      ],
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(16)),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      children: [
+                                        // Adjusted spacing to ensure uniformity between all fields
+                                        Row(children: [
+                                          Text("Name:",
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 80),
+                                              child: Text(vehicle.name,
+                                                  style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 14)),
+                                            ),
+                                          ),
+                                          IconButton(
+                                              onPressed: () =>
+                                                  _showVehicleInfoDialog(
+                                                      context, index),
+                                              icon: Icon(Icons.edit,
+                                                  color: Colors.white38,
+                                                  size: 18)),
+                                        ]),
+                                        const SizedBox(height: 12),
+                                        Row(children: [
+                                          Text("Type:",
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 87),
+                                              child: Text(vehicle.type,
+                                                  style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 14)),
+                                            ),
+                                          ),
+                                        ]),
+                                        const SizedBox(height: 12),
+                                        Row(children: [
+                                          Text("Reg #:",
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 81),
+                                              child: Text(vehicle.regNumber,
+                                                  style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 14)),
+                                            ),
+                                          ),
+                                        ]),
+                                        const SizedBox(height: 16),
+                                        Row(
+                                          children: [
+                                            Text("Capacity:",
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 63),
+                                                child: Text(
+                                                    vehicle.capacity.toString(),
+                                                    style: const TextStyle(
+                                                        color: Colors.white70,
+                                                        fontSize: 14)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Row(children: [
+                                          Text("A.C:",
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold)),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 95),
+                                              child: Text(
+                                                  vehicle.hasAC ? "Yes" : "No",
+                                                  style: const TextStyle(
+                                                      color: Colors.white70,
+                                                      fontSize: 14)),
+                                            ),
+                                          ),
+                                        ]),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            vehicleList.add(Vehicle(
+                              name: "New Vehicle",
+                              type: "Car",
+                              regNumber: "NEW-123",
+                              capacity: 4,
+                              hasAC: false,
+                            ));
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          "Add Vehicle",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
           ),
         ),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  // Profile Picture & Stats
-                  Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 45,
-                        backgroundImage: AssetImage(driver.profileImage),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(driver.firstName + " " + driver.lastName,
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 22)),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("${driver.rides} Rides",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                          const SizedBox(width: 20),
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          Text("${driver.rating}",
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 14)),
-                        ],
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 20),
 
-                  // Profile Info Card
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 8,
-                      margin: EdgeInsets.zero,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Color(0xFF3A3A3A),
-                              Color(0xFF1F1F1F),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.all(Radius.circular(16)),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              // Adjusted spacing to ensure uniformity between all fields
-                              Row(children: [
-                                Icon(
-                                  Icons.person,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 12),
-                                Text("Name:",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 45),
-                                    child: Text(
-                                        driver.firstName +
-                                            " " +
-                                            driver.lastName,
-                                        style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14)),
-                                  ),
-                                ),
-                                IconButton(
-                                    onPressed: () =>
-                                        _showEditNameDialog(context),
-                                    icon: Icon(Icons.edit,
-                                        color: Colors.white38, size: 18)),
-                              ]),
-                              const SizedBox(height: 12),
-                              Row(children: [
-                                Icon(
-                                  Icons.lock,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 12),
-                                Text("Password:",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: Text(driver.password,
-                                        style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14)),
-                                  ),
-                                ),
-                                IconButton(
-                                    onPressed: () =>
-                                        _showEditPasswordDialog(context),
-                                    icon: Icon(Icons.edit,
-                                        color: Colors.white38, size: 18)),
-                              ]),
-                              const SizedBox(height: 12),
-                              Row(children: [
-                                Icon(
-                                  Icons.phone,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 12),
-                                Text("Phone:",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 41),
-                                    child: Text(driver.phone,
-                                        style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14)),
-                                  ),
-                                ),
-                                IconButton(
-                                    onPressed: () =>
-                                        _showEditPhoneDialog(context),
-                                    icon: Icon(Icons.edit,
-                                        color: Colors.white38, size: 18)),
-                              ]),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.mail,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text("Email:",
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 47),
-                                      child: Text(driver.email,
-                                          style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 14)),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Row(children: [
-                                Icon(
-                                  driver.gender.toLowerCase() == "male"
-                                      ? Icons.male
-                                      : Icons.female,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 12),
-                                Text("Gender:",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 38),
-                                    child: Text(driver.gender,
-                                        style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14)),
-                                  ),
-                                ),
-                              ]),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Divider between Profile Info and Vehicle Info
-                  const Divider(
-                    color: Colors.white24,
-                    thickness: 1,
-                    indent: 16,
-                    endIndent: 16,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Vehicle Info Card
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          "Vehicles Info",
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        ),
-                      ),
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: vehicleList.length,
-                        itemBuilder: (context, index) {
-                          final vehicle = vehicleList[index];
-                          return StatefulBuilder(
-                            builder: (context, setState) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
-                                child: Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 8,
-                                  margin: EdgeInsets.zero,
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          Color(0xFF3A3A3A),
-                                          Color(0xFF1F1F1F),
-                                        ],
-                                      ),
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(16)),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Column(
-                                        children: [
-                                          // Adjusted spacing to ensure uniformity between all fields
-                                          Row(children: [
-                                            Text("Name:",
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 80),
-                                                child: Text(vehicle.name,
-                                                    style: const TextStyle(
-                                                        color: Colors.white70,
-                                                        fontSize: 14)),
-                                              ),
-                                            ),
-                                            IconButton(
-                                                onPressed: () =>
-                                                    _showVehicleInfoDialog(
-                                                        context, index),
-                                                icon: Icon(Icons.edit,
-                                                    color: Colors.white38,
-                                                    size: 18)),
-                                          ]),
-                                          const SizedBox(height: 12),
-                                          Row(children: [
-                                            Text("Type:",
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 87),
-                                                child: Text(vehicle.type,
-                                                    style: const TextStyle(
-                                                        color: Colors.white70,
-                                                        fontSize: 14)),
-                                              ),
-                                            ),
-                                          ]),
-                                          const SizedBox(height: 12),
-                                          Row(children: [
-                                            Text("Reg #:",
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 81),
-                                                child: Text(vehicle.regNumber,
-                                                    style: const TextStyle(
-                                                        color: Colors.white70,
-                                                        fontSize: 14)),
-                                              ),
-                                            ),
-                                          ]),
-                                          const SizedBox(height: 16),
-                                          Row(
-                                            children: [
-                                              Text("Capacity:",
-                                                  style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 63),
-                                                  child: Text(
-                                                      vehicle.capacity
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          color: Colors.white70,
-                                                          fontSize: 14)),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 20),
-                                          Row(children: [
-                                            Text("A.C:",
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 95),
-                                                child: Text(
-                                                    vehicle.hasAC
-                                                        ? "Yes"
-                                                        : "No",
-                                                    style: const TextStyle(
-                                                        color: Colors.white70,
-                                                        fontSize: 14)),
-                                              ),
-                                            ),
-                                          ]),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              vehicleList.add(Vehicle(
-                                name: "New Vehicle",
-                                type: "Car",
-                                regNumber: "NEW-123",
-                                capacity: 4,
-                                hasAC: false,
-                              ));
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text("Add Vehicle"),
-                        ),
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          ),
-
-          // Bottom Navigation Bar
-          bottomNavigationBar: BottomNavigationBar(
-            backgroundColor: const Color(0xFF1A1A1A),
-            selectedItemColor: Colors.blueAccent,
-            unselectedItemColor: Colors.grey,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.directions_car), label: ""),
-              BottomNavigationBarItem(icon: Icon(Icons.add), label: ""),
-              BottomNavigationBarItem(icon: Icon(Icons.message), label: ""),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: ""),
-            ],
-          ),
-        ));
-  }
-
-  Widget _buildEditableRow(String key, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 12),
-          Text("${capitalize(key)}:",
-              style: const TextStyle(color: Colors.white70, fontSize: 14)),
-          const SizedBox(width: 20),
-          Expanded(
-            child: isEditing[key] == true
-                ? TextField(
-                    controller: controllers[key],
-                    style: const TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 4),
-                      enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white24)),
-                      focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.blueAccent)),
-                    ),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.only(left: 20),
-                    child: Text(
-                      controllers[key]!.text,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                    ),
-                  ),
-          ),
-          IconButton(
-            onPressed: () => toggleEdit(key),
-            icon: Icon(
-              isEditing[key] == true ? Icons.check : Icons.edit,
-              color: Colors.white38,
-              size: 18,
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVehicleRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text("$title:",
-              style: const TextStyle(color: Colors.white70, fontSize: 14)),
-          const SizedBox(width: 8),
-          Expanded(
-              child: Text(value,
-                  style: const TextStyle(color: Colors.white, fontSize: 14))),
-        ],
-      ),
-    );
+        // Bottom Navigation Bar
+        bottomNavigationBar: DriverNavbar(initial_index: 4));
   }
 
   String capitalize(String input) =>

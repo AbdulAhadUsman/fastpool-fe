@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   static const Color primaryColor = Color(0x1E1E1E1E);
-  static const Color textColor = Color.fromARGB(163, 206, 206, 206);
-  static const Color backgroundColor = Color(0xFF111328);
+  static const Color textColor = Color.fromRGBO(206, 206, 206, 0.639);
+  static const Color backgroundColor = Color.fromARGB(255, 13, 15, 33);
   static const Color whiteColor = Colors.white;
   static const List<Color> textFieldColor = [
     Color(0xA4A4A4A4),

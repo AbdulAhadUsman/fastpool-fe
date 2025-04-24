@@ -1,7 +1,6 @@
+import 'package:fastpool_fe/components/DriverNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'package:permission_handler/permission_handler.dart';
 
 class Rider {
   String firstName;
@@ -404,88 +403,6 @@ class _RiderProfileState extends State<RiderProfile> {
     );
   }
 
-  // Future<void> _editProfilePhoto() async {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     backgroundColor: Colors.black.withOpacity(0.8),
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-  //     ),
-  //     builder: (context) {
-  //       return Wrap(
-  //         children: [
-  //           ListTile(
-  //             leading: const Icon(Icons.photo, color: Colors.white),
-  //             title: const Text("Choose from Gallery",
-  //                 style: TextStyle(color: Colors.white)),
-  //             onTap: () async {
-  //               if (await _requestPermission(Permission.photos)) {
-  //                 final XFile? image =
-  //                     await _picker.pickImage(source: ImageSource.gallery);
-  //                 if (image != null) {
-  //                   setState(() {
-  //                     rider.profileImage = image.path;
-  //                   });
-  //                 }
-  //               }
-  //               Navigator.pop(context);
-  //             },
-  //           ),
-  //           ListTile(
-  //             leading: const Icon(Icons.camera_alt, color: Colors.white),
-  //             title: const Text("Take a Photo",
-  //                 style: TextStyle(color: Colors.white)),
-  //             onTap: () async {
-  //               if (await _requestPermission(Permission.camera)) {
-  //                 final XFile? image =
-  //                     await _picker.pickImage(source: ImageSource.camera);
-  //                 if (image != null) {
-  //                   setState(() {
-  //                     rider.profileImage = image.path;
-  //                   });
-  //                 }
-  //               }
-  //               Navigator.pop(context);
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
-  // Future<bool> _requestPermission(Permission permission) async {
-  //   if (await permission.isGranted) {
-  //     return true;
-  //   }
-  //   final status = await permission.request();
-  //   return status.isGranted;
-  // }
-
-  final List<BottomNavigationBarItem> _bottomNavItems = const [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.directions_car),
-      label: 'Rides',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.add_circle, size: 30), // Moved "New Ride" here
-      label: 'New Ride',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person_search), // Moved "Requests" here
-      label: 'Requests',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person),
-      label: 'Profile',
-    ),
-  ];
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -725,33 +642,8 @@ class _RiderProfileState extends State<RiderProfile> {
               ]),
             ),
           ),
-          bottomNavigationBar: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(
-                  0xFF1F1F1F), // Matches the card background gradient
-              borderRadius: BorderRadius.circular(30), // Rounded edges
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(
-                  30), // Ensures content follows rounded edges
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                  // Add navigation logic here
-                },
-                items: _bottomNavItems,
-                selectedItemColor: Colors.blue, // Changed to blue
-                unselectedItemColor:
-                    Colors.white70, // Slightly faded white for unselected items
-                backgroundColor:
-                    Colors.transparent, // Transparent to match container
-                type: BottomNavigationBarType.fixed,
-              ),
-            ),
+          bottomNavigationBar: DriverNavbar(
+            initial_index: 4,
           ),
         ));
   }
