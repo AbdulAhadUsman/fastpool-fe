@@ -1,4 +1,5 @@
 import 'package:fastpool_fe/pages/NewRide.dart';
+import 'package:fastpool_fe/pages/driverHome.dart';
 import 'package:fastpool_fe/pages/driverProfile.dart';
 import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/riderProfile.dart';
@@ -36,6 +37,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: NewRide());
+    return MaterialApp(
+        debugShowCheckedModeBanner: false, home: DriverHomePage());
   }
 }
