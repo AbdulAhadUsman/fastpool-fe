@@ -8,7 +8,6 @@ import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/verifyAccount.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class SignUp extends StatefulWidget {

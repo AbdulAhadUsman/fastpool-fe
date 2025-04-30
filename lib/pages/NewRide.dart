@@ -1,5 +1,4 @@
 import 'package:fastpool_fe/components/DriverNavBar.dart';
-import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/pages/selectRoute.dart';
 import 'package:flutter/material.dart';
 

@@ -4,7 +4,6 @@ import 'package:fastpool_fe/pages/signup.dart';
 import 'package:fastpool_fe/pages/forgotPassword.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});

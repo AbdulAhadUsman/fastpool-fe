@@ -1,8 +1,6 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
 import 'package:fastpool_fe/pages/signup.dart';
-import 'package:fastpool_fe/pages/forgotPassword.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class Resetpassword extends StatefulWidget {

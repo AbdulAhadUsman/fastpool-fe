@@ -2,7 +2,6 @@ import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/progressBar.dart';
 import 'package:fastpool_fe/pages/selectVehicle.dart';
 import 'package:flutter/material.dart';
-import 'package:fastpool_fe/components/DriverNavBar.dart';
 
 class SelectRoute extends StatefulWidget {
   const SelectRoute({super.key});
@@ -12,7 +11,7 @@ class SelectRoute extends StatefulWidget {
 }
 
 class _SelectRouteState extends State<SelectRoute> {
-  int _currentStep = 1; // Change this value to update progress (0-2)
+  // int _currentStep = 1; // Change this value to update progress (0-2)
 
   @override
   Widget build(BuildContext context) {
