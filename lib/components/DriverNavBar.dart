@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fastpool_fe/pages/driverHome.dart';
+import 'package:fastpool_fe/pages/newRide.dart';
+import 'package:fastpool_fe/pages/driverProfile.dart';
 
 class DriverNavbar extends StatefulWidget {
   final initial_index;
@@ -53,10 +56,46 @@ class _DriverNavbarState extends State<DriverNavbar> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            // Add navigation logic here
+            // Navigation logic
+            switch (index) {
+              case 0:
+                setState(() {
+                  _currentIndex = 0; // Reset index to home
+                });
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DriverHomePage()),
+                  (route) => false, // Clear the stack for the home page
+                );
+                break;
+              case 2:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const NewRide()),
+                ).then((_) {
+                  setState(() {
+                    _currentIndex =
+                        widget.initial_index; // Reset to initial index
+                  });
+                });
+                break;
+              case 4:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DriverProfile()),
+                ).then((_) {
+                  setState(() {
+                    _currentIndex =
+                        widget.initial_index; // Reset to initial index
+                  });
+                });
+                break;
+              default:
+                // Handle other cases if needed
+                break;
+            }
           },
           items: _bottomNavItems,
           selectedItemColor: Colors.blue, // Changed to blue
