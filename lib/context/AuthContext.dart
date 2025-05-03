@@ -1,18 +1,20 @@
+import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:fastpool_fe/pages/driverHome.dart';
+import 'package:fastpool_fe/pages/roleSelection.dart';
 
 class AuthContext {
   static const _boxName = 'authBox';
   static const _tokenKey = 'auth_token';
   static const _expiryKey = 'auth_token_expiry';
+  static const _roleKey = 'user_role';
 
   static const _baseUrlKey = 'http://192.168.100.214:8000';
   static String get _baseUrl =>
       dotenv.env['BASE_URL'] ?? 'http://192.168.100.214:8000';
-
-
 
   // Initialize Hive (call this once at app startup)
   static Future<void> init() async {
@@ -48,8 +50,28 @@ class AuthContext {
     return getToken() != null;
   }
 
+  static Future<void> setRole(String role) async {
+    await _box.put(_roleKey, role);
+  }
 
+  static String? getRole() {
+    return _box.get(_roleKey);
+  }
 
+  static Future<void> navigateUserBasedOnRole(BuildContext context) async {
+    final role = getRole();
+    if (role == 'driver') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => DriverHomePage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => RoleSelection()),
+      );
+    }
+  }
 
   static Future<bool> login(String email, String password) async {
     try {
@@ -61,6 +83,7 @@ class AuthContext {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         await saveToken(data['access_token']);
+      
         return true;
       }
       return false;
@@ -94,7 +117,6 @@ class AuthContext {
         },
       );
 
-
       if (response.statusCode == 200) {
         return true;
       } else {
@@ -105,7 +127,6 @@ class AuthContext {
     } catch (e) {
       print('An error occurred during registration: $e');
       throw Exception('An error occurred during registration: $e');
-
     }
   }
 

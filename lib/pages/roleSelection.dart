@@ -1,5 +1,7 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
+import 'package:fastpool_fe/pages/driverHome.dart';
 
 class RoleSelection extends StatelessWidget {
   const RoleSelection({super.key});
@@ -24,9 +26,13 @@ class RoleSelection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () {
-                // Navigate to driver-related functionality
-                print('Driver selected');
+              onPressed: () async {
+                // Set the role as driver and navigate to DriverHomePage
+                await AuthContext.setRole('driver');
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => DriverHomePage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 padding:

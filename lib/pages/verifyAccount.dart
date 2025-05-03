@@ -8,6 +8,7 @@ import 'package:fastpool_fe/pages/signup.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:fastpool_fe/context/AuthContext.dart';
 
 class verifyAccount extends StatefulWidget {
   final String username;
@@ -32,34 +33,37 @@ class _verifyAccountState extends State<verifyAccount> {
   final _formKey = GlobalKey<FormState>();
   final otpController = TextEditingController();
 
-  void postData() async {
-    String current_api = api + 'users/verify/';
-
+  void verify() async {
     try {
-      http.Response response = await http.post(Uri.parse(current_api),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode({
-            'username': widget.username,
-            'email': widget.email,
-            'gender': widget.gender,
-            'phone': widget.phone,
-            'password': widget.password,
-            'otp': otpController.text,
-          }));
-      if (response.statusCode == 201) {
-        print('Account created successfully');
+      final success = await AuthContext.verify(
+        username: widget.username,
+        email: widget.email,
+        gender: widget.gender,
+        phone: widget.phone,
+        password: widget.password,
+        otp: otpController.text,
+      );
+
+      if (success) {
+        // Navigate to the login page on successful verification
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Account verified successfully!')),
+        );
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => Login()));
+          context,
+          MaterialPageRoute(builder: (context) => Login()),
+        );
       } else {
-        print('different status code');
-        print(response.body);
-        print(response.statusCode);
+        // Show error message if verification fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Verification failed. Please try again.')),
+        );
       }
     } catch (e) {
-      print('in the catch block');
-      print(e);
+      // Handle exceptions and show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
     }
   }
 
@@ -127,7 +131,7 @@ class _verifyAccountState extends State<verifyAccount> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () => postData(),
+                            onTap: () => verify(),
                             child: Container(
                               height: screenHeight * 0.06,
                               margin: EdgeInsets.symmetric(
