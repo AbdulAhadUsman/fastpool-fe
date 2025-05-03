@@ -4,6 +4,7 @@ import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/gender_selection.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
 import 'package:fastpool_fe/constants/api.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
 import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/verifyAccount.dart';
 import 'package:flutter/gestures.dart';
@@ -29,53 +30,50 @@ class _SignUpState extends State<SignUp> {
   bool _validateGender = false;
   bool _isSubmitting = false; // Add a flag to track submission state
 
-  void postData(
-      {String username = "",
-      String email = "",
-      String gender = "",
-      String phone = "",
-      String password = ""}) async {
-    String current_api = api + 'users/signup/';
 
-    setState(() {
-      _isSubmitting = true; // Disable the button
-    });
-    print('in the post data function');
+  void registerUser({
+    required String username,
+    required String email,
+    required String gender,
+    required String phone,
+    required String password,
+  }) async {
     try {
-      print('in the try block');
-      http.Response response = await http.post(Uri.parse(current_api),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode({
-            'username': username,
-            'email': email,
-            'gender': gender,
-            'phone': phone,
-            'password': password,
-          }));
+      final success = await AuthContext.register(
+        username: username,
+        email: email,
+        gender: gender,
+        phoneNumber: phone,
+        password: password,
+      );
 
-      if (response.statusCode == 200) {
-        Navigator.push(
+      if (success) {
+        // Navigate to the verification page on successful registration
+        Navigator.pushReplacement(
+
           context,
           MaterialPageRoute(
-              builder: (context) => verifyAccount(
-                    username: username,
-                    gender: gender,
-                    phone: phone,
-                    email: email,
-                    password: password,
-                  )),
+            builder: (context) => verifyAccount(
+              username: username,
+              gender: gender,
+              phone: phone,
+              email: email,
+              password: password,
+            ),
+          ),
         );
       } else {
-        print('Error: ${response.statusCode}');
+        // Show error message if registration fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed. Please try again.')),
+        );
       }
     } catch (e) {
-      print('Error: $e');
-    } finally {
-      setState(() {
-        _isSubmitting = false; // Re-enable the button
-      });
+      // Handle exceptions and show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+
     }
   }
 
@@ -285,28 +283,29 @@ class _SignUpState extends State<SignUp> {
                 SizedBox(height: screenHeight * 0.02),
                 // adding the sign up button
                 GestureDetector(
-                  onTap: _isSubmitting
-                      ? null // Disable the button if submitting
-                      : () {
-                          setState(() {
-                            _validateGender = true;
-                          });
-                          if (_formKey.currentState!.validate()) {
-                            if (isValidUsername &&
-                                isValidEmail &&
-                                isValidPhone &&
-                                isValidPassword &&
-                                isValidConfirmPassword &&
-                                _validateGender) {
-                              postData(
-                                  username: usernameController.text,
-                                  email: emailController.text,
-                                  gender: selectedGender,
-                                  phone: phoneController.text,
-                                  password: passwordController.text);
-                            }
-                          }
-                        },
+
+                  onTap: () {
+                    setState(() {
+                      _validateGender = true;
+                    });
+                    if (_formKey.currentState!.validate()) {
+                      if (isValidUsername &&
+                          isValidEmail &&
+                          isValidPhone &&
+                          isValidPassword &&
+                          isValidConfirmPassword &&
+                          _validateGender) {
+                        registerUser(
+                          username: usernameController.text,
+                          email: emailController.text,
+                          gender: selectedGender,
+                          phone: phoneController.text,
+                          password: passwordController.text,
+                        );
+                      }
+                    }
+                  },
+
                   child: Container(
                     height: screenHeight * 0.06,
                     margin:
