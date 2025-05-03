@@ -28,6 +28,8 @@ class _SignUpState extends State<SignUp> {
 
   String selectedGender = "";
   bool _validateGender = false;
+  bool _isSubmitting = false; // Add a flag to track submission state
+
 
   void registerUser({
     required String username,
@@ -48,6 +50,7 @@ class _SignUpState extends State<SignUp> {
       if (success) {
         // Navigate to the verification page on successful registration
         Navigator.pushReplacement(
+
           context,
           MaterialPageRoute(
             builder: (context) => verifyAccount(
@@ -70,6 +73,7 @@ class _SignUpState extends State<SignUp> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
+
     }
   }
 
@@ -279,6 +283,7 @@ class _SignUpState extends State<SignUp> {
                 SizedBox(height: screenHeight * 0.02),
                 // adding the sign up button
                 GestureDetector(
+
                   onTap: () {
                     setState(() {
                       _validateGender = true;
@@ -300,6 +305,7 @@ class _SignUpState extends State<SignUp> {
                       }
                     }
                   },
+
                   child: Container(
                     height: screenHeight * 0.06,
                     margin:
@@ -308,13 +314,21 @@ class _SignUpState extends State<SignUp> {
                         EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                          colors: AppColors.buttonColor,
-                          stops: AppColors.gradientStops),
+                          colors: _isSubmitting
+                              ? [Colors.grey, Colors.grey] // Disabled gradient
+                              : AppColors.buttonColor, // Normal gradient
+                          stops: _isSubmitting
+                              ? [
+                                  0.0,
+                                  1.0
+                                ] // Ensure equal length for disabled gradient
+                              : AppColors
+                                  .gradientStops), // Normal gradient stops
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
-                        "Sign Up",
+                        _isSubmitting ? "Submitting..." : "Sign Up",
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.045,

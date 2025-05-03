@@ -3,6 +3,7 @@ import 'package:fastpool_fe/pages/driverHome.dart';
 import 'package:fastpool_fe/pages/driverProfile.dart';
 import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/riderProfile.dart';
+import 'package:fastpool_fe/pages/roleSelection.dart';
 import 'package:fastpool_fe/pages/signup.dart';
 import 'package:fastpool_fe/pages/selectVehicle.dart';
 import 'package:flutter/material.dart';
@@ -37,6 +38,8 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+
     return MaterialApp(debugShowCheckedModeBanner: false, home: SignUp());
+
   }
 }
