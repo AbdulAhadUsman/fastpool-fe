@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
 import 'package:fastpool_fe/pages/newRide.dart';
 import 'package:fastpool_fe/pages/driverProfile.dart';
+import 'package:fastpool_fe/pages/driverRideRequests.dart';
 
 class DriverNavbar extends StatefulWidget {
   final initial_index;
@@ -69,6 +70,18 @@ class _DriverNavbarState extends State<DriverNavbar> {
                   (route) => false, // Clear the stack for the home page
                 );
                 break;
+              case 1:
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DriverRideRequests()),
+                ).then((_) {
+                  setState(() {
+                    _currentIndex =
+                        widget.initial_index; // Reset to initial index
+                  });
+                });
+                break;
               case 2:
                 Navigator.push(
                   context,
@@ -84,7 +97,7 @@ class _DriverNavbarState extends State<DriverNavbar> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const DriverProfile()),
+                      builder: (context) => const DriverRideRequests()),
                 ).then((_) {
                   setState(() {
                     _currentIndex =
