@@ -5,6 +5,69 @@ import 'package:fastpool_fe/components/DriverNavBar.dart';
 class DriverRideRequests extends StatelessWidget {
   const DriverRideRequests({super.key});
 
+  final List<Map<String, dynamic>> rideRequests = const [
+    {
+      'name': 'Ali Haider',
+      'email': 'l226666@lhr.nu.edu.pk',
+      'pickup': 'Askari 11',
+      'time': 'Monday, 8:30',
+      'rating': 4.4,
+      'profileUrl': 'assets/images/Login.png',
+      'rideDetails': {
+        'Source': 'Askari 11',
+        'Destination': 'Destination Placeholder',
+        'Time': 'Monday, 8:30',
+        'Preferred Gender': 'Gender Placeholder',
+        'Amount': 'Amount Placeholder',
+        'Payment Option': 'Payment Placeholder',
+        'Vehicle Type': 'Vehicle Placeholder',
+        'Registration #': 'Reg# Placeholder',
+        'Available Seats': 'Seats Placeholder',
+        'AC': 'AC Placeholder',
+      },
+    },
+    {
+      'name': 'Sara Khan',
+      'email': 'sara.k@lhr.nu.edu.pk',
+      'pickup': 'DHA Phase 5',
+      'time': 'Tuesday, 9:00',
+      'rating': 4.7,
+      'profileUrl': 'assets/images/Login.png',
+      'rideDetails': {
+        'Source': 'DHA Phase 5',
+        'Destination': 'Destination Placeholder',
+        'Time': 'Tuesday, 9:00',
+        'Preferred Gender': 'Gender Placeholder',
+        'Amount': 'Amount Placeholder',
+        'Payment Option': 'Payment Placeholder',
+        'Vehicle Type': 'Vehicle Placeholder',
+        'Registration #': 'Reg# Placeholder',
+        'Available Seats': 'Seats Placeholder',
+        'AC': 'AC Placeholder',
+      },
+    },
+    {
+      'name': 'Ahmed Raza',
+      'email': 'ahmed.r@lhr.nu.edu.pk',
+      'pickup': 'Gulberg III',
+      'time': 'Wednesday, 8:00',
+      'rating': 4.9,
+      'profileUrl': 'assets/images/Login.png',
+      'rideDetails': {
+        'Source': 'Gulberg III',
+        'Destination': 'Destination Placeholder',
+        'Time': 'Wednesday, 8:00',
+        'Preferred Gender': 'Gender Placeholder',
+        'Amount': 'Amount Placeholder',
+        'Payment Option': 'Payment Placeholder',
+        'Vehicle Type': 'Vehicle Placeholder',
+        'Registration #': 'Reg# Placeholder',
+        'Available Seats': 'Seats Placeholder',
+        'AC': 'AC Placeholder',
+      },
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,38 +90,26 @@ class DriverRideRequests extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              RideRequestCard(
-                name: 'Ali Haider',
-                email: 'l226666@lhr.nu.edu.pk',
-                pickup: 'Askari 11',
-                time: 'Monday, 8:30',
-                rating: 4.4,
-                profileUrl: 'assets/images/Login.png',
-              ),
-              SizedBox(height: 16),
-              RideRequestCard(
-                name: 'Sara Khan',
-                email: 'sara.k@lhr.nu.edu.pk',
-                pickup: 'DHA Phase 5',
-                time: 'Tuesday, 9:00',
-                rating: 4.7,
-                profileUrl: 'assets/images/Login.png',
-              ),
-              SizedBox(height: 16),
-              RideRequestCard(
-                name: 'Ahmed Raza',
-                email: 'ahmed.r@lhr.nu.edu.pk',
-                pickup: 'Gulberg III',
-                time: 'Wednesday, 8:00',
-                rating: 4.9,
-                profileUrl: 'assets/images/Login.png',
-              ),
-            ],
+            children: rideRequests.map((ride) {
+              return Column(
+                children: [
+                  RideRequestCard(
+                    name: ride['name'],
+                    email: ride['email'],
+                    pickup: ride['pickup'],
+                    time: ride['time'],
+                    rating: ride['rating'],
+                    profileUrl: ride['profileUrl'],
+                    rideDetails: ride['rideDetails'],
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
           ),
         ),
       ),
-      bottomNavigationBar: DriverNavbar(initial_index: 2),
+      bottomNavigationBar: DriverNavbar(initial_index: 1),
     );
   }
 }
@@ -71,6 +122,8 @@ class RideRequestCard extends StatelessWidget {
   final double rating;
   final String profileUrl;
 
+  final Map<String, String> rideDetails;
+
   const RideRequestCard({
     super.key,
     required this.name,
@@ -79,6 +132,7 @@ class RideRequestCard extends StatelessWidget {
     required this.time,
     required this.rating,
     required this.profileUrl,
+    required this.rideDetails, // Added ride details map
   });
 
   @override
@@ -129,197 +183,32 @@ class RideRequestCard extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: rideDetails.entries.map((entry) {
+                          return Column(
                             children: [
-                              const Text('Source:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              Flexible(
-                                child: Text(pickup,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('${entry.key}:',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 16,
+                                      )),
+                                  Flexible(
+                                    child: Text(entry.value,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                        ),
+                                        overflow: TextOverflow.ellipsis),
+                                  ),
+                                ],
                               ),
+                              const SizedBox(height: 10),
                             ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Destination:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Destination Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Time:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              Flexible(
-                                child: Text(time,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Preferred Gender:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Gender Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Amount:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Amount Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Payment Option:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Payment Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Vehicle Type:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Vehicle Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Registration #:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Reg# Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Available Seats:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('Seats Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('AC:',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 16,
-                                  )),
-                              const Flexible(
-                                child: Text('AC Placeholder',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    overflow: TextOverflow.ellipsis),
-                              ),
-                            ],
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
                     ),
                   ),

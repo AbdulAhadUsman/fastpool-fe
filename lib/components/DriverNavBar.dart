@@ -60,15 +60,16 @@ class _DriverNavbarState extends State<DriverNavbar> {
             // Navigation logic
             switch (index) {
               case 0:
-                setState(() {
-                  _currentIndex = 0; // Reset index to home
-                });
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(
                       builder: (context) => const DriverHomePage()),
                   (route) => false, // Clear the stack for the home page
-                );
+                ).then((_) {
+                  setState(() {
+                    _currentIndex = 0; // Update index for Home
+                  });
+                });
                 break;
               case 1:
                 Navigator.push(
@@ -77,8 +78,7 @@ class _DriverNavbarState extends State<DriverNavbar> {
                       builder: (context) => const DriverRideRequests()),
                 ).then((_) {
                   setState(() {
-                    _currentIndex =
-                        widget.initial_index; // Reset to initial index
+                    _currentIndex = 1; // Update index for Rides
                   });
                 });
                 break;
@@ -88,8 +88,18 @@ class _DriverNavbarState extends State<DriverNavbar> {
                   MaterialPageRoute(builder: (context) => const NewRide()),
                 ).then((_) {
                   setState(() {
-                    _currentIndex =
-                        widget.initial_index; // Reset to initial index
+                    _currentIndex = 2; // Update index for New Ride
+                  });
+                });
+                break;
+              case 3: // Corrected case for Requests
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const DriverRideRequests()),
+                ).then((_) {
+                  setState(() {
+                    _currentIndex = 3; // Update index for Requests
                   });
                 });
                 break;
@@ -97,11 +107,10 @@ class _DriverNavbarState extends State<DriverNavbar> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const DriverRideRequests()),
+                      builder: (context) => const DriverProfile()),
                 ).then((_) {
                   setState(() {
-                    _currentIndex =
-                        widget.initial_index; // Reset to initial index
+                    _currentIndex = 4; // Update index for Profile
                   });
                 });
                 break;
