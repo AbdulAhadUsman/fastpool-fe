@@ -7,7 +7,9 @@ class AuthContext {
   static const _boxName = 'authBox';
   static const _tokenKey = 'auth_token';
   static const _expiryKey = 'auth_token_expiry';
-  static String get _baseUrl => dotenv.env['BASE_URL'] ?? 'https://127.0.0.1';
+  static const _baseUrlKey = 'http://192.168.100.214:8000';
+  static String get _baseUrl =>
+      dotenv.env['BASE_URL'] ?? 'http://192.168.100.214:8000';
 
   // Initialize Hive (call this once at app startup)
   static Future<void> init() async {
@@ -68,9 +70,13 @@ class AuthContext {
     required String phoneNumber,
     required String gender,
   }) async {
+    print('in the register function');
     try {
+      print('in the try block of register function');
+      print(email);
+      print(_baseUrlKey);
       final response = await http.post(
-        Uri.parse('$_baseUrl/users/register/'),
+        Uri.parse('$_baseUrlKey/users/signup/'),
         body: {
           'email': email,
           'password': password,
@@ -80,7 +86,7 @@ class AuthContext {
         },
       );
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         return true;
       } else {
         final errorData = json.decode(response.body);
