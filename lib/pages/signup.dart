@@ -27,6 +27,7 @@ class _SignUpState extends State<SignUp> {
 
   String selectedGender = "";
   bool _validateGender = false;
+  bool _isSubmitting = false; // Add a flag to track submission state
 
   void postData(
       {String username = "",
@@ -36,8 +37,12 @@ class _SignUpState extends State<SignUp> {
       String password = ""}) async {
     String current_api = api + 'users/signup/';
 
+    setState(() {
+      _isSubmitting = true; // Disable the button
+    });
     print('in the post data function');
     try {
+      print('in the try block');
       http.Response response = await http.post(Uri.parse(current_api),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
@@ -49,10 +54,9 @@ class _SignUpState extends State<SignUp> {
             'phone': phone,
             'password': password,
           }));
-      print('request sent');
+
       if (response.statusCode == 200) {
-        print('redirecting');
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
               builder: (context) => verifyAccount(
@@ -64,12 +68,14 @@ class _SignUpState extends State<SignUp> {
                   )),
         );
       } else {
-        print('different status code');
-        print(response.statusCode);
+        print('Error: ${response.statusCode}');
       }
     } catch (e) {
-      print('in the catch block');
-      print(e);
+      print('Error: $e');
+    } finally {
+      setState(() {
+        _isSubmitting = false; // Re-enable the button
+      });
     }
   }
 
@@ -279,29 +285,28 @@ class _SignUpState extends State<SignUp> {
                 SizedBox(height: screenHeight * 0.02),
                 // adding the sign up button
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _validateGender = true;
-                    });
-                    if (_formKey.currentState!.validate()) {
-                      print("Sign Up");
-                      print(
-                          selectedGender); // Ensure selected gender is printed
-                      if (isValidUsername &&
-                          isValidEmail &&
-                          isValidPhone &&
-                          isValidPassword &&
-                          isValidConfirmPassword &&
-                          _validateGender) {
-                        postData(
-                            username: usernameController.text,
-                            email: emailController.text,
-                            gender: selectedGender,
-                            phone: phoneController.text,
-                            password: passwordController.text);
-                      }
-                    }
-                  },
+                  onTap: _isSubmitting
+                      ? null // Disable the button if submitting
+                      : () {
+                          setState(() {
+                            _validateGender = true;
+                          });
+                          if (_formKey.currentState!.validate()) {
+                            if (isValidUsername &&
+                                isValidEmail &&
+                                isValidPhone &&
+                                isValidPassword &&
+                                isValidConfirmPassword &&
+                                _validateGender) {
+                              postData(
+                                  username: usernameController.text,
+                                  email: emailController.text,
+                                  gender: selectedGender,
+                                  phone: phoneController.text,
+                                  password: passwordController.text);
+                            }
+                          }
+                        },
                   child: Container(
                     height: screenHeight * 0.06,
                     margin:
@@ -310,13 +315,21 @@ class _SignUpState extends State<SignUp> {
                         EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                          colors: AppColors.buttonColor,
-                          stops: AppColors.gradientStops),
+                          colors: _isSubmitting
+                              ? [Colors.grey, Colors.grey] // Disabled gradient
+                              : AppColors.buttonColor, // Normal gradient
+                          stops: _isSubmitting
+                              ? [
+                                  0.0,
+                                  1.0
+                                ] // Ensure equal length for disabled gradient
+                              : AppColors
+                                  .gradientStops), // Normal gradient stops
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
-                        "Sign Up",
+                        _isSubmitting ? "Submitting..." : "Sign Up",
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.045,
