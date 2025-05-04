@@ -4,6 +4,8 @@ import 'package:fastpool_fe/pages/signup.dart';
 import 'package:fastpool_fe/pages/forgotPassword.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
+import 'package:fastpool_fe/pages/roleSelection.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -16,6 +18,32 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  void login() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        final success = await AuthContext.login(
+          emailController.text,
+          passwordController.text,
+        );
+
+        if (success) {
+          // Navigate the user based on their role
+          await AuthContext.navigateUserBasedOnRole(context);
+        } else {
+          // Show error message if login fails
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Login failed. Please check your credentials.')),
+          );
+        }
+      } catch (e) {
+        // Handle exceptions and show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,21 +214,7 @@ class _LoginState extends State<Login> {
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
-                      onTap: () {
-                        if (_formKey.currentState!.validate()) {
-                          print("Before Validation: ${_formKey.currentState}");
-                          print("Login");
-                          bool check = _formKey.currentState!.validate();
-                          print(check);
-                          // return;
-                          if (isValidPassword && isValidEmail) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => SignUp()),
-                            );
-                          }
-                        }
-                      },
+                      onTap: () => login(),
                       child: Container(
                         height: screenHeight * 0.06,
                         margin: EdgeInsets.symmetric(

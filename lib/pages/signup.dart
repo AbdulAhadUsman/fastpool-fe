@@ -4,6 +4,7 @@ import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/gender_selection.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
 import 'package:fastpool_fe/constants/api.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
 import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/verifyAccount.dart';
 import 'package:flutter/gestures.dart';
@@ -27,49 +28,49 @@ class _SignUpState extends State<SignUp> {
 
   String selectedGender = "";
   bool _validateGender = false;
+  bool _isSubmitting = false; // Add a flag to track submission state
 
-  void postData(
-      {String username = "",
-      String email = "",
-      String gender = "",
-      String phone = "",
-      String password = ""}) async {
-    String current_api = api + 'users/signup/';
-
-    print('in the post data function');
+  void registerUser({
+    required String username,
+    required String email,
+    required String gender,
+    required String phone,
+    required String password,
+  }) async {
     try {
-      http.Response response = await http.post(Uri.parse(current_api),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode({
-            'username': username,
-            'email': email,
-            'gender': gender,
-            'phone': phone,
-            'password': password,
-          }));
-      print('request sent');
-      if (response.statusCode == 200) {
-        print('redirecting');
-        Navigator.pushReplacement(
+      final success = await AuthContext.register(
+        username: username,
+        email: email,
+        gender: gender,
+        phoneNumber: phone,
+        password: password,
+      );
+
+      if (success) {
+        // Navigate to the verification page on successful registration
+        Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => verifyAccount(
-                    username: username,
-                    gender: gender,
-                    phone: phone,
-                    email: email,
-                    password: password,
-                  )),
+            builder: (context) => verifyAccount(
+              username: username,
+              gender: gender,
+              phone: phone,
+              email: email,
+              password: password,
+            ),
+          ),
         );
       } else {
-        print('different status code');
-        print(response.statusCode);
+        // Show error message if registration fails
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration failed. Please try again.')),
+        );
       }
     } catch (e) {
-      print('in the catch block');
-      print(e);
+      // Handle exceptions and show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
     }
   }
 
@@ -284,21 +285,19 @@ class _SignUpState extends State<SignUp> {
                       _validateGender = true;
                     });
                     if (_formKey.currentState!.validate()) {
-                      print("Sign Up");
-                      print(
-                          selectedGender); // Ensure selected gender is printed
                       if (isValidUsername &&
                           isValidEmail &&
                           isValidPhone &&
                           isValidPassword &&
                           isValidConfirmPassword &&
                           _validateGender) {
-                        postData(
-                            username: usernameController.text,
-                            email: emailController.text,
-                            gender: selectedGender,
-                            phone: phoneController.text,
-                            password: passwordController.text);
+                        registerUser(
+                          username: usernameController.text,
+                          email: emailController.text,
+                          gender: selectedGender,
+                          phone: phoneController.text,
+                          password: passwordController.text,
+                        );
                       }
                     }
                   },
@@ -310,13 +309,21 @@ class _SignUpState extends State<SignUp> {
                         EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                          colors: AppColors.buttonColor,
-                          stops: AppColors.gradientStops),
+                          colors: _isSubmitting
+                              ? [Colors.grey, Colors.grey] // Disabled gradient
+                              : AppColors.buttonColor, // Normal gradient
+                          stops: _isSubmitting
+                              ? [
+                                  0.0,
+                                  1.0
+                                ] // Ensure equal length for disabled gradient
+                              : AppColors
+                                  .gradientStops), // Normal gradient stops
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
-                        "Sign Up",
+                        _isSubmitting ? "Submitting..." : "Sign Up",
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: screenWidth * 0.045,

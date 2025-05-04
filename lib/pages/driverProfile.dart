@@ -1188,28 +1188,82 @@ class _DriverProfileState extends State<DriverProfile> {
                     ),
                     const SizedBox(height: 20),
                     Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            vehicleList.add(Vehicle(
-                              name: "New Vehicle",
-                              type: "Car",
-                              regNumber: "NEW-123",
-                              capacity: 4,
-                              hasAC: false,
-                            ));
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: Column(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                vehicleList.add(Vehicle(
+                                  name: "New Vehicle",
+                                  type: "Car",
+                                  regNumber: "NEW-123",
+                                  capacity: 4,
+                                  hasAC: false,
+                                ));
+                              });
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14), // Consistent padding
+                              minimumSize: const Size(
+                                  200, 50), // Consistent size for all buttons
+                              backgroundColor: Colors.blueAccent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              "Add Vehicle",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          "Add Vehicle",
-                          style: TextStyle(color: Colors.white),
-                        ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              // Add logout functionality here
+                              print('Logout button clicked');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14), // Consistent padding
+                              minimumSize: const Size(
+                                  200, 50), // Consistent size for all buttons
+                              backgroundColor: Colors.blueAccent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Logout',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () {
+                              // Add delete account functionality here
+                              print('Delete Account button clicked');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14), // Consistent padding
+                              minimumSize: const Size(
+                                  200, 50), // Consistent size for all buttons
+                              backgroundColor:
+                                  Colors.red, // Red color for delete button
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Delete Account',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
