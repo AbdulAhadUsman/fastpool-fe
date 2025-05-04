@@ -1,3 +1,4 @@
+import 'package:fastpool_fe/pages/loading.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
@@ -5,6 +6,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
 import 'package:fastpool_fe/pages/roleSelection.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AuthContext {
   static const _boxName = 'authBox';
@@ -18,7 +20,18 @@ class AuthContext {
 
   // Initialize Hive (call this once at app startup)
   static Future<void> init() async {
-    await Hive.openBox(_boxName);
+    try {
+      WidgetsFlutterBinding.ensureInitialized();
+      final dir = await getApplicationDocumentsDirectory();
+      Hive.init(dir.path);
+      await Hive.openBox(_boxName);
+    } catch (e) {
+      print('Error initializing Hive: $e');
+      // Fallback to temporary directory if needed
+      final tempDir = await getTemporaryDirectory();
+      Hive.init(tempDir.path);
+      await Hive.openBox(_boxName);
+    }
   }
 
   static Box get _box => Hive.box(_boxName);
@@ -76,14 +89,14 @@ class AuthContext {
   static Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/users/login/'),
+        Uri.parse('$_baseUrlKey/users/login/'),
         body: {'email': email, 'password': password},
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         await saveToken(data['access_token']);
-      
+
         return true;
       }
       return false;
@@ -99,7 +112,6 @@ class AuthContext {
     required String phoneNumber,
     required String gender,
   }) async {
-
     print('in the register function');
     try {
       print('in the try block of register function');
@@ -107,7 +119,6 @@ class AuthContext {
       print(_baseUrlKey);
       final response = await http.post(
         Uri.parse('$_baseUrlKey/users/signup/'),
-
         body: {
           'email': email,
           'password': password,
@@ -139,8 +150,15 @@ class AuthContext {
     required String otp,
   }) async {
     try {
+      print(username);
+      print(email);
+      print(gender);
+      print(phone);
+      print(password);
+      print(otp);
+
       final response = await http.post(
-        Uri.parse('$_baseUrl/users/verify/'),
+        Uri.parse('$_baseUrlKey/users/verify/'),
         body: {
           'username': username,
           'email': email,

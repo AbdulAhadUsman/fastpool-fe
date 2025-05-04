@@ -7,12 +7,14 @@ class SplashScreen extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         image: DecorationImage(
-          image: AssetImage('assets/images/background.png'), // Replace with your background image
+          image: AssetImage(
+              'assets/images/background.png'), // Replace with your background image
           fit: BoxFit.cover,
         ),
       ),
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        backgroundColor:
+            AppColors.backgroundColor, // Semi-transparent background
         body: Center(
           child: Text(
             "FastPool",

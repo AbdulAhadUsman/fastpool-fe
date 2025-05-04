@@ -2,6 +2,7 @@ import 'package:fastpool_fe/context/AuthContext.dart';
 import 'package:fastpool_fe/pages/NewRide.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
 import 'package:fastpool_fe/pages/driverProfile.dart';
+import 'package:fastpool_fe/pages/loading.dart';
 import 'package:fastpool_fe/pages/login.dart';
 import 'package:fastpool_fe/pages/riderProfile.dart';
 import 'package:fastpool_fe/pages/roleSelection.dart';
@@ -38,7 +39,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLoginStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLoginStatus();
+    });
   }
 
   Future<void> _checkLoginStatus() async {

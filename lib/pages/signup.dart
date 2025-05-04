@@ -30,7 +30,6 @@ class _SignUpState extends State<SignUp> {
   bool _validateGender = false;
   bool _isSubmitting = false; // Add a flag to track submission state
 
-
   void registerUser({
     required String username,
     required String email,
@@ -49,8 +48,7 @@ class _SignUpState extends State<SignUp> {
 
       if (success) {
         // Navigate to the verification page on successful registration
-        Navigator.pushReplacement(
-
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => verifyAccount(
@@ -73,7 +71,6 @@ class _SignUpState extends State<SignUp> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
-
     }
   }
 
@@ -283,7 +280,6 @@ class _SignUpState extends State<SignUp> {
                 SizedBox(height: screenHeight * 0.02),
                 // adding the sign up button
                 GestureDetector(
-
                   onTap: () {
                     setState(() {
                       _validateGender = true;
@@ -305,7 +301,6 @@ class _SignUpState extends State<SignUp> {
                       }
                     }
                   },
-
                   child: Container(
                     height: screenHeight * 0.06,
                     margin:

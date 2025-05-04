@@ -41,7 +41,7 @@ class _verifyAccountState extends State<verifyAccount> {
         gender: widget.gender,
         phone: widget.phone,
         password: widget.password,
-        otp: otpController.text,
+        otp: otpController.text.toString(),
       );
 
       if (success) {
