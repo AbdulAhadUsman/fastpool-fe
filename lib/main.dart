@@ -4,6 +4,7 @@ import 'package:fastpool_fe/pages/driverHome.dart';
 import 'package:fastpool_fe/pages/driverProfile.dart';
 import 'package:fastpool_fe/pages/loading.dart';
 import 'package:fastpool_fe/pages/login.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
 import 'package:fastpool_fe/pages/riderProfile.dart';
 import 'package:fastpool_fe/pages/roleSelection.dart';
 import 'package:fastpool_fe/pages/signup.dart';
