@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 class AppColors {
   static const Color primaryColor = Color(0x1E1E1E1E);
   static const Color textColor = Color.fromRGBO(206, 206, 206, 0.639);
-  static const Color backgroundColor = Color.fromARGB(255, 13, 15, 33);
+  static const Color backgroundColor = Color(0xFF151316);
   static const Color whiteColor = Colors.white;
   static const List<Color> textFieldColor = [
     Color(0xA4A4A4A4),
     Color(0x1E1E1E1E)
   ];
+  static const Color NavbarSelected = Color(0xFF539CE4);
   static const List<double> gradientStops = [0.0, 0.42, 1.0];
   static const List<Color> buttonColor = [
     Color(0xff539CE4),
