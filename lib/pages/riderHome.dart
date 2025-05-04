@@ -14,10 +14,10 @@ class RiderHomePage extends StatefulWidget {
   State<RiderHomePage> createState() => _RiderHomePageState();
 }
 
-class _RiderHomePageState extends State<RiderHomePage> {
+class _RiderHomePageState extends State<RiderHomePage>
+    with AutomaticKeepAliveClientMixin {
   final String profilePicUrl = 'assets/images/Login.png';
   final String driverName = 'Shariq Munir';
-
   final String backendUrl = 'http://10.0.2.2:8000'; // <-- changeable URL
   final String accessToken = access_token;
 
@@ -27,11 +27,26 @@ class _RiderHomePageState extends State<RiderHomePage> {
   bool isLoading = true;
   String? errorMessage;
 
+  // Cache for homepage data
+  Map<String, dynamic>? cachedData;
+
   @override
   void initState() {
     super.initState();
-    fetchHomepageData();
+    if (cachedData == null) {
+      fetchHomepageData();
+    } else {
+      setState(() {
+        isLoading = false;
+        pendingRequestsCount = cachedData?['Results']['pending_requests_count'];
+        rating = (cachedData?['Results']['rating'] as num).toDouble();
+        upcomingRide = cachedData?['Results']['upcoming_ride'];
+      });
+    }
   }
+
+  @override
+  bool get wantKeepAlive => true; // This makes sure the page state is preserved
 
   Future<void> fetchHomepageData() async {
     setState(() {
@@ -65,7 +80,6 @@ class _RiderHomePageState extends State<RiderHomePage> {
             ride['destination_lng'],
           );
 
-          // Store those in ride object or use directly below
           ride['source_address'] = sourceAddress;
           ride['destination_address'] = destinationAddress;
         }
@@ -75,6 +89,9 @@ class _RiderHomePageState extends State<RiderHomePage> {
           rating = (data['Results']['rating'] as num).toDouble();
           upcomingRide = ride;
           isLoading = false;
+
+          // Cache the data after fetching
+          cachedData = data;
         });
       } else {
         setState(() {
@@ -92,6 +109,8 @@ class _RiderHomePageState extends State<RiderHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // This is important for AutomaticKeepAliveClientMixin
+
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       body: SafeArea(
@@ -116,106 +135,104 @@ class _RiderHomePageState extends State<RiderHomePage> {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Card(
-                  color: const Color(0xFF1E1E1E),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundImage: AssetImage(profilePicUrl),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Welcome $driverName',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                color: const Color(0xFF1E1E1E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Stats',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatCard(
-                        icon: Icons.directions_car,
-                        title: 'Pending Requests',
-                        value: pendingRequestsCount?.toString() ?? '-',
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundImage: AssetImage(profilePicUrl),
                       ),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: StatCard(
-                        icon: Icons.star,
-                        title: 'My Rating',
-                        value: rating?.toStringAsFixed(1) ?? '-',
+                      const SizedBox(width: 12),
+                      Text(
+                        'Welcome $driverName',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Poppins',
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Stats',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.directions_car,
+                      title: 'Pending Requests',
+                      value: pendingRequestsCount?.toString() ?? '-',
                     ),
-                  ],
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  'Upcoming Ride',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
                   ),
-                ),
-                const SizedBox(height: 5),
-                if (upcomingRide != null) ...[
-                  UpcomingRideCard(
-                    source: upcomingRide!['source_address'] ?? 'Unknown',
-                    destination:
-                        upcomingRide!['destination_address'] ?? 'Unknown',
-                    time: upcomingRide!['time'],
-                    date: upcomingRide!['date'],
-                    preferredGender: upcomingRide!['preferred_gender'],
-                    amount: upcomingRide!['amount'].toString(),
-                    paymentOption: upcomingRide!['payment_option'],
-                    vehicleType: upcomingRide!['vehicle_type'],
-                    registrationNumber: upcomingRide!['vehicle_reg#'],
-                    availableSeats: upcomingRide!['available_seats'],
-                    acStatus: upcomingRide!['ac'] ? 'Yes' : 'No',
-                  ),
-                ] else ...[
-                  const Text(
-                    'You have no upcoming ride.',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontFamily: 'Poppins',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.star,
+                      title: 'My Rating',
+                      value: rating?.toStringAsFixed(1) ?? '-',
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 15),
+              const Text(
+                'Upcoming Ride',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Poppins',
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 5),
+              if (upcomingRide != null) ...[
+                UpcomingRideCard(
+                  source: upcomingRide!['source_address'] ?? 'Unknown',
+                  destination:
+                      upcomingRide!['destination_address'] ?? 'Unknown',
+                  time: upcomingRide!['time'],
+                  date: upcomingRide!['date'],
+                  preferredGender: upcomingRide!['preferred_gender'],
+                  amount: upcomingRide!['amount'].toString(),
+                  paymentOption: upcomingRide!['payment_option'],
+                  vehicleType: upcomingRide!['vehicle_type'],
+                  registrationNumber: upcomingRide!['vehicle_reg#'],
+                  availableSeats: upcomingRide!['available_seats'],
+                  acStatus: upcomingRide!['ac'] ? 'Yes' : 'No',
+                ),
+              ] else ...[
+                const Text(
+                  'You have no upcoming ride.',
+                  style: TextStyle(
+                    color: Colors.white54,
+                    fontFamily: 'Poppins',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
