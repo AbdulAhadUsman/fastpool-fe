@@ -1,6 +1,7 @@
 import 'package:fastpool_fe/components/RiderNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/constants/api.dart';
+import 'package:fastpool_fe/helper-functions/reverseGeoLoc.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -49,10 +50,30 @@ class _RiderHomePageState extends State<RiderHomePage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final ride = data['Results']['upcoming_ride'];
+
+        String? sourceAddress;
+        String? destinationAddress;
+
+        if (ride != null) {
+          sourceAddress = await getAddressFromLatLng(
+            ride['source_lat'],
+            ride['source_lng'],
+          );
+          destinationAddress = await getAddressFromLatLng(
+            ride['destination_lat'],
+            ride['destination_lng'],
+          );
+
+          // Store those in ride object or use directly below
+          ride['source_address'] = sourceAddress;
+          ride['destination_address'] = destinationAddress;
+        }
+
         setState(() {
           pendingRequestsCount = data['Results']['pending_requests_count'];
           rating = (data['Results']['rating'] as num).toDouble();
-          upcomingRide = data['Results']['upcoming_ride'];
+          upcomingRide = ride;
           isLoading = false;
         });
       } else {
@@ -169,10 +190,9 @@ class _RiderHomePageState extends State<RiderHomePage> {
                 const SizedBox(height: 5),
                 if (upcomingRide != null) ...[
                   UpcomingRideCard(
-                    source:
-                        'Lat: ${upcomingRide!['source_lat']}, Lng: ${upcomingRide!['source_lng']}',
+                    source: upcomingRide!['source_address'] ?? 'Unknown',
                     destination:
-                        'Lat: ${upcomingRide!['destination_lat']}, Lng: ${upcomingRide!['destination_lng']}',
+                        upcomingRide!['destination_address'] ?? 'Unknown',
                     time: upcomingRide!['time'],
                     date: upcomingRide!['date'],
                     preferredGender: upcomingRide!['preferred_gender'],
@@ -386,22 +406,35 @@ class RideInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment:
+            CrossAxisAlignment.start, // Align top for multi-line
         children: [
-          Text(
-            label,
-            style: const TextStyle(
+          SizedBox(
+            width: 130, // Fixed width for label
+            child: Text(
+              label,
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
                 fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-                color: Colors.white, fontFamily: 'Poppins', fontSize: 14),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value,
+              softWrap: true,
+              overflow: TextOverflow.visible,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontFamily: 'Poppins',
+              ),
+            ),
           ),
         ],
       ),
