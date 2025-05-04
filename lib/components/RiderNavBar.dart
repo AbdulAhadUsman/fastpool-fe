@@ -59,8 +59,6 @@ class _RiderNavbarState extends State<RiderNavbar> {
   @override
   Widget build(BuildContext context) {
     const backgroundColor = Color(0xFF282828);
-    const selectedColor = Colors.blue;
-    const unselectedColor = Colors.white54;
 
     return Container(
       margin: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 20),
@@ -91,7 +89,7 @@ class _RiderNavbarState extends State<RiderNavbar> {
           ? Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.NavbarSelected, // Circular background
+                color: AppColors.primaryBlue, // Circular background
                 shape: BoxShape.circle,
               ),
               child: Icon(
