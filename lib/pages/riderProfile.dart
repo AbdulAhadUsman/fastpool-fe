@@ -1,4 +1,5 @@
 import 'package:fastpool_fe/components/DriverNavBar.dart';
+import 'package:fastpool_fe/components/RiderNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
 
@@ -642,8 +643,8 @@ class _RiderProfileState extends State<RiderProfile> {
               ]),
             ),
           ),
-          bottomNavigationBar: DriverNavbar(
-            initial_index: 4,
+          bottomNavigationBar: RiderNavbar(
+            initialIndex: 3,
           ),
         ));
   }
