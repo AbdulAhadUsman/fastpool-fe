@@ -1,7 +1,9 @@
-import 'package:fastpool_fe/components/DriverNavBar.dart';
 import 'package:fastpool_fe/components/RiderNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
+import 'package:fastpool_fe/constants/api.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 // import 'package:lucide_icons/lucide_icons.dart'; // Optional if you want matching icons
 
 class RiderHomePage extends StatefulWidget {
@@ -12,34 +14,91 @@ class RiderHomePage extends StatefulWidget {
 }
 
 class _RiderHomePageState extends State<RiderHomePage> {
-  final String driverName = 'Shariq Munir';
   final String profilePicUrl = 'assets/images/Login.png';
-  final int last30DaysRides = 3;
-  final double myRating = 4.8;
+  final String driverName = 'Shariq Munir';
 
-  final String source = 'DHA Phase 7';
-  final String destination = 'Fast NUCES Lahore';
-  final String time = '8:30 AM';
-  final String preferredGender = 'Male';
-  final String amount = '150';
-  final String paymentOption = 'Cash';
-  final String vehicleType = 'Car';
-  final String registrationNumber = 'ABC-123';
-  final int availableSeats = 4;
-  final String acStatus = 'Yes';
+  final String backendUrl = 'http://10.0.2.2:8000'; // <-- changeable URL
+  final String accessToken = access_token;
+
+  int? pendingRequestsCount;
+  Map<String, dynamic>? upcomingRide;
+  double? rating;
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchHomepageData();
+  }
+
+  Future<void> fetchHomepageData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('$backendUrl/riders/homepage'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          pendingRequestsCount = data['Results']['pending_requests_count'];
+          rating = (data['Results']['rating'] as num).toDouble();
+          upcomingRide = data['Results']['upcoming_ride'];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Error: ${response.statusCode}';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Failed to load data: $e';
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       body: SafeArea(
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : errorMessage != null
+                ? Center(
+                    child: Text(errorMessage!,
+                        style: const TextStyle(color: Colors.red)))
+                : buildContent(),
+      ),
+      bottomNavigationBar: RiderNavbar(initialIndex: 0),
+    );
+  }
+
+  Widget buildContent() {
+    return RefreshIndicator(
+      onRefresh: fetchHomepageData,
+      color: AppColors.primaryBlue,
+      backgroundColor: AppColors.backgroundColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome Header
                 Card(
                   color: const Color(0xFF1E1E1E),
                   shape: RoundedRectangleBorder(
@@ -68,8 +127,6 @@ class _RiderHomePageState extends State<RiderHomePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // Stats Section
                 const Text(
                   'Stats',
                   style: TextStyle(
@@ -86,7 +143,7 @@ class _RiderHomePageState extends State<RiderHomePage> {
                       child: StatCard(
                         icon: Icons.directions_car,
                         title: 'Pending Requests',
-                        value: '$last30DaysRides',
+                        value: pendingRequestsCount?.toString() ?? '-',
                       ),
                     ),
                     const SizedBox(width: 5),
@@ -94,14 +151,12 @@ class _RiderHomePageState extends State<RiderHomePage> {
                       child: StatCard(
                         icon: Icons.star,
                         title: 'My Rating',
-                        value: '$myRating',
+                        value: rating?.toStringAsFixed(1) ?? '-',
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 15),
-
-                // Upcoming Ride Section
                 const Text(
                   'Upcoming Ride',
                   style: TextStyle(
@@ -112,43 +167,37 @@ class _RiderHomePageState extends State<RiderHomePage> {
                   ),
                 ),
                 const SizedBox(height: 5),
-                UpcomingRideCard(
-                  source: source,
-                  destination: destination,
-                  time: time,
-                  preferredGender: preferredGender,
-                  amount: amount,
-                  paymentOption: paymentOption,
-                  vehicleType: vehicleType,
-                  registrationNumber: registrationNumber,
-                  availableSeats: availableSeats,
-                  acStatus: acStatus,
-                ),
-                const SizedBox(height: 15),
-
-                const Text(
-                  'Pending Requests',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontSize: 30,
-                    fontWeight: FontWeight.w800,
+                if (upcomingRide != null) ...[
+                  UpcomingRideCard(
+                    source:
+                        'Lat: ${upcomingRide!['source_lat']}, Lng: ${upcomingRide!['source_lng']}',
+                    destination:
+                        'Lat: ${upcomingRide!['destination_lat']}, Lng: ${upcomingRide!['destination_lng']}',
+                    time: upcomingRide!['time'],
+                    date: upcomingRide!['date'],
+                    preferredGender: upcomingRide!['preferred_gender'],
+                    amount: upcomingRide!['amount'].toString(),
+                    paymentOption: upcomingRide!['payment_option'],
+                    vehicleType: upcomingRide!['vehicle_type'],
+                    registrationNumber: upcomingRide!['vehicle_reg#'],
+                    availableSeats: upcomingRide!['available_seats'],
+                    acStatus: upcomingRide!['ac'] ? 'Yes' : 'No',
                   ),
-                ),
-                const SizedBox(height: 5),
-                RideSummaryCard(
-                  pickup: 'Askari 11',
-                  dateTime: 'Friday, 8:30',
-                  fare: '100',
-                )
+                ] else ...[
+                  const Text(
+                    'You have no upcoming ride.',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontFamily: 'Poppins',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ),
-      ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: RiderNavbar(
-        initialIndex: 0,
       ),
     );
   }
@@ -207,21 +256,22 @@ class UpcomingRideCard extends StatelessWidget {
   final String vehicleType;
   final String registrationNumber;
   final int availableSeats;
+  final String date;
   final String acStatus;
 
-  const UpcomingRideCard({
-    super.key,
-    required this.source,
-    required this.destination,
-    required this.time,
-    required this.preferredGender,
-    required this.amount,
-    required this.paymentOption,
-    required this.vehicleType,
-    required this.registrationNumber,
-    required this.availableSeats,
-    required this.acStatus,
-  });
+  const UpcomingRideCard(
+      {super.key,
+      required this.source,
+      required this.destination,
+      required this.time,
+      required this.preferredGender,
+      required this.amount,
+      required this.paymentOption,
+      required this.vehicleType,
+      required this.registrationNumber,
+      required this.availableSeats,
+      required this.acStatus,
+      required this.date});
 
   @override
   Widget build(BuildContext context) {
@@ -235,6 +285,7 @@ class UpcomingRideCard extends StatelessWidget {
             RideInfoRow(label: 'Source', value: source),
             RideInfoRow(label: 'Destination', value: destination),
             RideInfoRow(label: 'Time', value: time),
+            RideInfoRow(label: 'Date', value: date),
             RideInfoRow(label: 'Preferred Gender', value: preferredGender),
             RideInfoRow(label: 'Amount', value: amount),
             RideInfoRow(label: 'Payment Option', value: paymentOption),
