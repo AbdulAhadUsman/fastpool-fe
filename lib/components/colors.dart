@@ -9,7 +9,7 @@ class AppColors {
     Color(0xA4A4A4A4),
     Color(0x1E1E1E1E)
   ];
-  static const Color NavbarSelected = Color(0xFF539CE4);
+  static const Color primaryBlue = Color(0xFF539CE4);
   static const List<double> gradientStops = [0.0, 0.42, 1.0];
   static const List<Color> buttonColor = [
     Color(0xff539CE4),
