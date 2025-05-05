@@ -27,104 +27,126 @@ class _DriverHomePageState extends State<DriverHomePage> {
   final int availableSeats = 4;
   final String acStatus = 'Yes';
 
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    // Simulate data fetching
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() {
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Header
-                Card(
-                  color: const Color(0xFF1E1E1E),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundImage: AssetImage(profilePicUrl),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Colors.blueAccent,
+              ),
+            )
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Welcome Header
+                      Card(
+                        color: const Color(0xFF1E1E1E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Welcome $driverName',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundImage: AssetImage(profilePicUrl),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Welcome $driverName',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Stats Section
-                const Text(
-                  'Stats',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatCard(
-                        icon: Icons.directions_car,
-                        title: 'Last 30 Days',
-                        value: '$last30DaysRides',
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatCard(
-                        icon: Icons.star,
-                        title: 'My Rating',
-                        value: '$myRating',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                // Upcoming Ride Section
-                const Text(
-                  'Upcoming Ride',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                      // Stats Section
+                      const Text(
+                        'Stats',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.directions_car,
+                              title: 'Last 30 Days',
+                              value: '$last30DaysRides',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.star,
+                              title: 'My Rating',
+                              value: '$myRating',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Upcoming Ride Section
+                      const Text(
+                        'Upcoming Ride',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      UpcomingRideCard(
+                        source: source,
+                        destination: destination,
+                        time: time,
+                        preferredGender: preferredGender,
+                        amount: amount,
+                        paymentOption: paymentOption,
+                        vehicleType: vehicleType,
+                        registrationNumber: registrationNumber,
+                        availableSeats: availableSeats,
+                        acStatus: acStatus,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                UpcomingRideCard(
-                  source: source,
-                  destination: destination,
-                  time: time,
-                  preferredGender: preferredGender,
-                  amount: amount,
-                  paymentOption: paymentOption,
-                  vehicleType: vehicleType,
-                  registrationNumber: registrationNumber,
-                  availableSeats: availableSeats,
-                  acStatus: acStatus,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
       // Bottom Navigation Bar
       bottomNavigationBar: DriverNavbar(
         initial_index: 0,
