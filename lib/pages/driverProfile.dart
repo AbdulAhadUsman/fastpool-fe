@@ -328,7 +328,7 @@ class _DriverProfileState extends State<DriverProfile> {
   }
 
   void _showEditPasswordDialog(BuildContext context) {
-    final passwordController = TextEditingController(text: driver.password);
+    final passwordController = TextEditingController(text: "");
     final confirmPasswordController = TextEditingController();
     bool isPasswordVisible = false;
     bool isConfirmPasswordVisible = false;

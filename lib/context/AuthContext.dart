@@ -14,7 +14,7 @@ class AuthContext {
   static const _expiryKey = 'auth_token_expiry';
   static const _roleKey = 'user_role';
 
-  static const _baseUrlKey = 'http://192.168.100.214:8000';
+  static const _baseUrlKey = 'http://192.168.43.254:8000';
   static String get _baseUrl =>
       dotenv.env['BASE_URL'] ?? 'http://192.168.100.214:8000';
 
