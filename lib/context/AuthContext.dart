@@ -73,6 +73,43 @@ class AuthContext {
 
   static Future<void> navigateUserBasedOnRole(BuildContext context) async {
     final role = getRole();
+    final token = getToken();
+
+    if (role != null && token != null) {
+      try {
+        final response = await http.get(
+          Uri.parse('$_baseUrlKey/users/profile/?role=$role'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final username = data['username'];
+          final email = data['email'];
+          final gender = data['gender'];
+          final phone = data['phone'];
+          final profilePicUrl = data['profile_picture_url'];
+          final ratings = data['ratings'];
+          final numberOfRatings = data['no_of_ratings'];
+
+          print('User Profile:');
+          print('Username: $username');
+          print('Email: $email');
+          print('Gender: $gender');
+          print('Phone: $phone');
+          print('Profile Picture URL: $profilePicUrl');
+          print('Rating: $ratings');
+          print('Number of Ratings: $numberOfRatings');
+        } else {
+          print('Failed to fetch user profile: ${response.statusCode}');
+        }
+      } catch (e) {
+        print('An error occurred while fetching user profile: $e');
+      }
+    }
+
     if (role == 'driver') {
       Navigator.pushReplacement(
         context,
