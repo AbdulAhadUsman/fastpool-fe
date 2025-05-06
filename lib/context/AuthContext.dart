@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
 import 'package:fastpool_fe/pages/roleSelection.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -81,7 +82,7 @@ class AuthContext {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => RoleSelection()),
+        MaterialPageRoute(builder: (context) => RiderHomePage()),
       );
     }
   }
