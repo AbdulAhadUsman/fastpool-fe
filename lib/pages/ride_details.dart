@@ -24,7 +24,15 @@ class RideDetailsPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        content,
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFF282828),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: content,
+        ),
         const SizedBox(height: 24),
       ],
     );
@@ -32,7 +40,7 @@ class RideDetailsPage extends StatelessWidget {
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -68,38 +76,9 @@ class RideDetailsPage extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: AppColors.primaryBlue.withOpacity(0.3),
-          width: 2,
-        ),
-      ),
-      child: ClipOval(
-        child: Image.network(
-          imageUrl,
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
-                    : null,
-                color: AppColors.primaryBlue,
-                strokeWidth: 2,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: const Color(0xFF282828),
-              child: const Icon(
-                Icons.person,
-                color: Color(0xFFA4A4A4),
-                size: 30,
-              ),
-            );
-          },
         ),
       ),
     );
@@ -153,13 +132,23 @@ class RideDetailsPage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              '${ride.driver.rating}★',
-                              style: const TextStyle(
-                                color: Colors.amber,
-                                fontFamily: 'Poppins',
-                                fontSize: 14,
-                              ),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.amber,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  ride.driver.rating.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.amber,
+                                    fontFamily: 'Poppins',
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
