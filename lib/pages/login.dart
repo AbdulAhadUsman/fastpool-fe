@@ -18,7 +18,7 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  bool isLoading = false; // Add isLoading state
+  bool isLoading = false; // Loading state flag
 
   void login() async {
     if (_formKey.currentState!.validate()) {
@@ -192,9 +192,6 @@ class _LoginState extends State<Login> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
                         }
-                        if (value != passwordController.text) {
-                          return 'Passwords do not match';
-                        }
                         isValidPassword = true;
                         return null;
                       },
@@ -234,20 +231,50 @@ class _LoginState extends State<Login> {
                             horizontal: screenWidth * 0.05),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                              colors: AppColors.buttonColor,
-                              stops: AppColors.gradientStops),
+                            colors: isLoading
+                                ? [
+                                    Colors.grey.shade400,
+                                    Colors.grey.shade600
+                                  ] // Disabled gradient
+                                : AppColors.buttonColor, // Active gradient
+                            stops: isLoading
+                                ? [0.0, 1.0] // Stops for disabled gradient
+                                : AppColors
+                                    .gradientStops, // Normal gradient stops
+                          ),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
                           child: isLoading
-                              ? CircularProgressIndicator(
-                                  color: Colors.white) // Show loader
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      "Logging in...",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: screenWidth * 0.045,
+                                        fontFamily: 'Poppins',
+                                      ),
+                                    ),
+                                  ],
+                                )
                               : Text(
                                   "Login",
                                   style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.045,
-                                      fontFamily: 'Poppins'),
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.045,
+                                    fontFamily: 'Poppins',
+                                  ),
                                 ),
                         ),
                       ),

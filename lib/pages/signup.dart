@@ -28,7 +28,7 @@ class _SignUpState extends State<SignUp> {
 
   String selectedGender = "";
   bool _validateGender = false;
-  bool _isSubmitting = false; // Add a flag to track submission state
+  bool _isSubmitting = false; // Flag to track submission state
 
   void registerUser({
     required String username,
@@ -37,6 +37,11 @@ class _SignUpState extends State<SignUp> {
     required String phone,
     required String password,
   }) async {
+    // Set submission state to true when registration starts
+    setState(() {
+      _isSubmitting = true;
+    });
+
     try {
       final success = await AuthContext.register(
         username: username,
@@ -45,6 +50,11 @@ class _SignUpState extends State<SignUp> {
         phoneNumber: phone,
         password: password,
       );
+
+      // Set submission state to false when registration ends
+      setState(() {
+        _isSubmitting = false;
+      });
 
       if (success) {
         // Navigate to the verification page on successful registration
@@ -68,6 +78,10 @@ class _SignUpState extends State<SignUp> {
       }
     } catch (e) {
       // Handle exceptions and show error message
+      setState(() {
+        _isSubmitting = false; // Ensure button is re-enabled on error
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -280,27 +294,29 @@ class _SignUpState extends State<SignUp> {
                 SizedBox(height: screenHeight * 0.02),
                 // adding the sign up button
                 GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _validateGender = true;
-                    });
-                    if (_formKey.currentState!.validate()) {
-                      if (isValidUsername &&
-                          isValidEmail &&
-                          isValidPhone &&
-                          isValidPassword &&
-                          isValidConfirmPassword &&
-                          _validateGender) {
-                        registerUser(
-                          username: usernameController.text,
-                          email: emailController.text,
-                          gender: selectedGender,
-                          phone: phoneController.text,
-                          password: passwordController.text,
-                        );
-                      }
-                    }
-                  },
+                  onTap: _isSubmitting
+                      ? null // Disable onTap when submitting
+                      : () {
+                          setState(() {
+                            _validateGender = true;
+                          });
+                          if (_formKey.currentState!.validate()) {
+                            if (isValidUsername &&
+                                isValidEmail &&
+                                isValidPhone &&
+                                isValidPassword &&
+                                isValidConfirmPassword &&
+                                selectedGender.isNotEmpty) {
+                              registerUser(
+                                username: usernameController.text,
+                                email: emailController.text,
+                                gender: selectedGender,
+                                phone: phoneController.text,
+                                password: passwordController.text,
+                              );
+                            }
+                          }
+                        },
                   child: Container(
                     height: screenHeight * 0.06,
                     margin:
@@ -309,26 +325,50 @@ class _SignUpState extends State<SignUp> {
                         EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                          colors: _isSubmitting
-                              ? [Colors.grey, Colors.grey] // Disabled gradient
-                              : AppColors.buttonColor, // Normal gradient
-                          stops: _isSubmitting
-                              ? [
-                                  0.0,
-                                  1.0
-                                ] // Ensure equal length for disabled gradient
-                              : AppColors
-                                  .gradientStops), // Normal gradient stops
+                        colors: _isSubmitting
+                            ? [
+                                Colors.grey.shade400,
+                                Colors.grey.shade600
+                              ] // Disabled gradient
+                            : AppColors.buttonColor, // Normal gradient
+                        stops: _isSubmitting
+                            ? [0.0, 1.0] // Stops for disabled gradient
+                            : AppColors.gradientStops, // Normal gradient stops
+                      ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Text(
-                        _isSubmitting ? "Submitting..." : "Sign Up",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: screenWidth * 0.045,
-                            fontFamily: 'Poppins'),
-                      ),
+                      child: _isSubmitting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Signing Up...",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.045,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: screenWidth * 0.045,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
                     ),
                   ),
                 ),
