@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fastpool_fe/pages/riderHome.dart';
+import 'package:fastpool_fe/pages/rideDiscover.dart';
 import 'package:fastpool_fe/pages/riderExplore.dart';
 import 'package:fastpool_fe/pages/riderTrips.dart';
 import 'package:fastpool_fe/components/colors.dart';
@@ -33,7 +34,7 @@ class _RiderNavbarState extends State<RiderNavbar> {
         targetPage = const RiderHomePage();
         break;
       case 1:
-        targetPage = const RiderExplorePage();
+        targetPage = const RideDiscover();
         break;
       case 2:
         targetPage = const RiderTripsPage();
