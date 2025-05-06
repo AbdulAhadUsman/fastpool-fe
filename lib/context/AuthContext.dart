@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
 import 'package:fastpool_fe/pages/roleSelection.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -14,9 +15,9 @@ class AuthContext {
   static const _expiryKey = 'auth_token_expiry';
   static const _roleKey = 'user_role';
 
-  static const _baseUrlKey = 'http://192.168.100.214:8000';
+  static const _baseUrlKey = 'http://192.168.43.254:8000';
   static String get _baseUrl =>
-      dotenv.env['BASE_URL'] ?? 'http://192.168.100.214:8000';
+      dotenv.env['BASE_URL'] ?? 'http://192.168.43.254:8000';
 
   // Initialize Hive (call this once at app startup)
   static Future<void> init() async {
@@ -81,7 +82,7 @@ class AuthContext {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => RoleSelection()),
+        MaterialPageRoute(builder: (context) => RiderHomePage()),
       );
     }
   }
