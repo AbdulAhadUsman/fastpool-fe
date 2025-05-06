@@ -77,6 +77,24 @@ class _RideCardState extends State<RideCard>
     );
   }
 
+  String _formatTime(String time) {
+    // Parse the 24-hour time string
+    final timeParts = time.split(':');
+    if (timeParts.length < 2) return time;
+
+    int hour = int.tryParse(timeParts[0]) ?? 0;
+    int minute = int.tryParse(timeParts[1]) ?? 0;
+
+    String period = 'AM';
+    if (hour >= 12) {
+      period = 'PM';
+      if (hour > 12) hour -= 12;
+    }
+    if (hour == 0) hour = 12;
+
+    return '$hour:${minute.toString().padLeft(2, '0')} $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -184,13 +202,16 @@ class _RideCardState extends State<RideCard>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         // Amount
-                        Text(
-                          'Rs ${widget.ride.amount}',
-                          style: const TextStyle(
-                            color: AppColors.primaryBlue,
-                            fontFamily: 'Poppins',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Text(
+                            'Rs ${widget.ride.amount}',
+                            style: const TextStyle(
+                              color: AppColors.primaryBlue,
+                              fontFamily: 'Poppins',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -205,7 +226,7 @@ class _RideCardState extends State<RideCard>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${widget.ride.time.hour}:${widget.ride.time.minute.toString().padLeft(2, '0')}',
+                              _formatTime(widget.ride.time),
                               style: const TextStyle(
                                 color: AppColors.primaryBlue,
                                 fontFamily: 'Poppins',
@@ -270,27 +291,27 @@ class _RideCardState extends State<RideCard>
                         _buildDetailRow(
                           Icons.person,
                           'Driver',
-                          '${widget.ride.driver.name} (${widget.ride.driver.rating}★)',
+                          '${widget.ride.driver.username} (${widget.ride.driver.driverRating}★)',
                         ),
                         _buildDetailRow(
                           Icons.directions_car,
                           'Vehicle',
-                          '${widget.ride.vehicle.model} - ${widget.ride.vehicle.number}',
+                          '${widget.ride.vehicle.name} - ${widget.ride.vehicle.registrationNumber}',
                         ),
                         _buildDetailRow(
                           Icons.event_seat,
                           'Capacity',
-                          '${widget.ride.capacity} seats',
+                          '${widget.ride.capacity} seats (${widget.ride.availableSeats} available)',
                         ),
                         _buildDetailRow(
-                          Icons.timer,
-                          'Duration',
-                          '${widget.ride.duration} mins',
+                          Icons.calendar_today,
+                          'Date',
+                          widget.ride.date,
                         ),
                         _buildDetailRow(
-                          Icons.speed,
-                          'Distance',
-                          '${widget.ride.distance} km',
+                          Icons.person_outline,
+                          'Preferred',
+                          widget.ride.preferredGender,
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
