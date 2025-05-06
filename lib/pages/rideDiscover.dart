@@ -3,6 +3,8 @@ import '../components/colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../components/ride_card.dart';
 import '../models/ride.dart';
+import '../components/RiderNavBar.dart';
+import '../components/ride_filters.dart';
 
 class RideDiscover extends StatefulWidget {
   const RideDiscover({super.key});
@@ -12,14 +14,17 @@ class RideDiscover extends StatefulWidget {
 }
 
 class _RideDiscoverState extends State<RideDiscover>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final FocusNode pickupFocusNode;
   late final FocusNode destinationFocusNode;
   late final AnimationController _animationController;
   late final Animation<double> _animation;
+  late final AnimationController _filterAnimationController;
+  late final Animation<Offset> _filterSlideAnimation;
 
   bool isPickupFocused = false;
   bool isDestinationFocused = false;
+  bool isFilterVisible = false;
 
   // Sample rides data
   final List<Ride> rides = [
@@ -89,6 +94,72 @@ class _RideDiscoverState extends State<RideDiscover>
       duration: 30,
       distance: 8.7,
     ),
+    Ride(
+      driver: Driver(
+        name: 'Jane Smith',
+        rating: 4.9,
+        email: 'jane.smith@example.com',
+        contactNumber: '+92 300 7654321',
+        profilePicUrl: 'https://xsgames.co/randomusers/avatar.php?g=female',
+      ),
+      sourceLat: 0,
+      sourceLng: 0,
+      destinationLat: 0,
+      destinationLng: 0,
+      vehicle: Vehicle(
+        model: 'Toyota Corolla',
+        number: 'XYZ-789',
+        type: 'car',
+        hasAC: true,
+      ),
+      time: DateTime.now().add(const Duration(hours: 2)),
+      capacity: 4,
+      availableSeats: 4,
+      unbookedSeats: 2,
+      amount: 150,
+      preferredGender: 'Any',
+      paymentOption: 'Cash',
+      expirationTime: DateTime.now().add(const Duration(hours: 3)),
+      date: DateTime.now(),
+      riders: [],
+      pickup: 'North Nazimabad, Block A',
+      destination: 'DHA Phase 6',
+      duration: 30,
+      distance: 8.7,
+    ),
+    Ride(
+      driver: Driver(
+        name: 'Jane Smith',
+        rating: 4.9,
+        email: 'jane.smith@example.com',
+        contactNumber: '+92 300 7654321',
+        profilePicUrl: 'https://xsgames.co/randomusers/avatar.php?g=female',
+      ),
+      sourceLat: 0,
+      sourceLng: 0,
+      destinationLat: 0,
+      destinationLng: 0,
+      vehicle: Vehicle(
+        model: 'Toyota Corolla',
+        number: 'XYZ-789',
+        type: 'car',
+        hasAC: true,
+      ),
+      time: DateTime.now().add(const Duration(hours: 2)),
+      capacity: 4,
+      availableSeats: 4,
+      unbookedSeats: 2,
+      amount: 150,
+      preferredGender: 'Any',
+      paymentOption: 'Cash',
+      expirationTime: DateTime.now().add(const Duration(hours: 3)),
+      date: DateTime.now(),
+      riders: [],
+      pickup: 'North Nazimabad, Block A',
+      destination: 'DHA Phase 6',
+      duration: 30,
+      distance: 8.7,
+    ),
   ];
 
   @override
@@ -106,6 +177,19 @@ class _RideDiscoverState extends State<RideDiscover>
       begin: 2.0,
       end: 5.0,
     ).animate(_animationController);
+
+    _filterAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _filterSlideAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _filterAnimationController,
+      curve: Curves.easeInOut,
+    ));
 
     pickupFocusNode.addListener(() {
       setState(() {
@@ -125,7 +209,25 @@ class _RideDiscoverState extends State<RideDiscover>
     pickupFocusNode.dispose();
     destinationFocusNode.dispose();
     _animationController.dispose();
+    _filterAnimationController.dispose();
     super.dispose();
+  }
+
+  void _toggleFilter() {
+    setState(() {
+      isFilterVisible = !isFilterVisible;
+      if (isFilterVisible) {
+        _filterAnimationController.forward();
+      } else {
+        _filterAnimationController.reverse();
+      }
+    });
+  }
+
+  void _handleFilters(Map<String, dynamic> filters) {
+    // TODO: Implement filter logic
+    print('Applied filters: $filters');
+    _toggleFilter();
   }
 
   Widget _buildGlowingShape({
@@ -160,169 +262,216 @@ class _RideDiscoverState extends State<RideDiscover>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            children: [
-              Center(
-                child: Text(
-                  'Discover Rides',
-                  style: const TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                height: 1,
-                color: Colors.grey[800],
-              ),
-              const SizedBox(height: 15),
-              Column(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
                 children: [
-                  Stack(
+                  const Center(
+                    child: Text(
+                      'Discover Rides',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    height: 1,
+                    color: Colors.grey[800],
+                  ),
+                  const SizedBox(height: 15),
+                  Column(
                     children: [
-                      // Main content container
-                      Container(
-                        height: 120,
-                        margin: const EdgeInsets.only(right: 50),
-                        child: Stack(
-                          children: [
-                            // Vertical line
-                            Positioned(
-                              left: 4,
-                              top: 25,
-                              height: 70,
-                              child: Container(
-                                width: 2,
-                                color: const Color(0xFFA4A4A4),
-                              ),
-                            ),
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Stack(
+                        children: [
+                          // Main content container
+                          Container(
+                            height: 120,
+                            margin: const EdgeInsets.only(right: 50),
+                            child: Stack(
                               children: [
-                                Row(
-                                  children: [
-                                    _buildGlowingShape(
-                                      isSquare: false,
-                                      isFocused: isPickupFocused,
-                                    ),
-                                    const SizedBox(width: 20),
-                                    SizedBox(
-                                      width: 280,
-                                      child: TextField(
-                                        focusNode: pickupFocusNode,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontFamily: 'Poppins',
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: 'Pickup',
-                                          hintStyle: const TextStyle(
-                                            color: Color(0xFFA4A4A4),
-                                            fontFamily: 'Poppins',
-                                          ),
-                                          filled: true,
-                                          fillColor: const Color(0xFF282828),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                // Vertical line
+                                Positioned(
+                                  left: 4,
+                                  top: 25,
+                                  height: 70,
+                                  child: Container(
+                                    width: 2,
+                                    color: const Color(0xFFA4A4A4),
+                                  ),
                                 ),
-                                Row(
+                                Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    _buildGlowingShape(
-                                      isSquare: true,
-                                      isFocused: isDestinationFocused,
+                                    Row(
+                                      children: [
+                                        _buildGlowingShape(
+                                          isSquare: false,
+                                          isFocused: isPickupFocused,
+                                        ),
+                                        const SizedBox(width: 20),
+                                        SizedBox(
+                                          width: 280,
+                                          child: TextField(
+                                            focusNode: pickupFocusNode,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: 'Pickup',
+                                              hintStyle: const TextStyle(
+                                                color: Color(0xFFA4A4A4),
+                                                fontFamily: 'Poppins',
+                                              ),
+                                              filled: true,
+                                              fillColor:
+                                                  const Color(0xFF282828),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 20),
-                                    SizedBox(
-                                      width: 280,
-                                      child: TextField(
-                                        focusNode: destinationFocusNode,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontFamily: 'Poppins',
+                                    Row(
+                                      children: [
+                                        _buildGlowingShape(
+                                          isSquare: true,
+                                          isFocused: isDestinationFocused,
                                         ),
-                                        decoration: InputDecoration(
-                                          hintText: 'Destination',
-                                          hintStyle: const TextStyle(
-                                            color: Color(0xFFA4A4A4),
-                                            fontFamily: 'Poppins',
-                                          ),
-                                          filled: true,
-                                          fillColor: const Color(0xFF282828),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 14,
+                                        const SizedBox(width: 20),
+                                        SizedBox(
+                                          width: 280,
+                                          child: TextField(
+                                            focusNode: destinationFocusNode,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                            decoration: InputDecoration(
+                                              hintText: 'Destination',
+                                              hintStyle: const TextStyle(
+                                                color: Color(0xFFA4A4A4),
+                                                fontFamily: 'Poppins',
+                                              ),
+                                              filled: true,
+                                              fillColor:
+                                                  const Color(0xFF282828),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                borderSide: BorderSide.none,
+                                              ),
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical: 14,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                      // Filter icon
-                      Positioned(
-                        right: 0,
-                        top: 42,
-                        child: SvgPicture.asset(
-                          'assets/icons/Filter.svg',
-                          width: 26,
-                          height: 29,
-                          colorFilter: const ColorFilter.mode(
-                            Color(0xFFA4A4A4),
-                            BlendMode.srcIn,
                           ),
-                        ),
+                          // Filter icon
+                          Positioned(
+                            right: 0,
+                            top: 42,
+                            child: GestureDetector(
+                              onTap: _toggleFilter,
+                              child: SvgPicture.asset(
+                                'assets/icons/Filter.svg',
+                                width: 26,
+                                height: 29,
+                                colorFilter: const ColorFilter.mode(
+                                  Color(0xFFA4A4A4),
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 15),
+                      Container(
+                        height: 1,
+                        color: Colors.grey[800],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 15),
-                  Container(
-                    height: 1,
-                    color: Colors.grey[800],
+                  const SizedBox(height: 20),
+                  // Ride results
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: rides.length,
+                      itemBuilder: (context, index) {
+                        return RideCard(ride: rides[index]);
+                      },
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-              // Ride results
-              Expanded(
-                child: ListView.builder(
-                  itemCount: rides.length,
-                  itemBuilder: (context, index) {
-                    return RideCard(ride: rides[index]);
-                  },
+            ),
+          ),
+          // Filter overlay
+          if (isFilterVisible)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _toggleFilter,
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          // Filter panel
+          if (isFilterVisible)
+            Positioned(
+              right: 20,
+              top: 120,
+              child: SlideTransition(
+                position: _filterSlideAnimation,
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundColor,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: RideFilters(
+                    onApplyFilters: _handleFilters,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
+      bottomNavigationBar: const RiderNavbar(initialIndex: 1),
     );
   }
 }
