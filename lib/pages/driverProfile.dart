@@ -1017,6 +1017,7 @@ class _DriverProfileState extends State<DriverProfile> {
 
                                 if (success) {
                                   Navigator.pop(context);
+                                  await _fetchData(); // Add this line to refresh the UI
                                 }
                               },
                               child: const Text(
@@ -1080,11 +1081,16 @@ class _DriverProfileState extends State<DriverProfile> {
           'AC': hasAC,
         }),
       );
-
+      print('before if');
       if (response.statusCode == 201) {
-        final newVehicle = json.decode(response.body);
+        print(response.body.toString());
+        print('yahi');
+        final resp = json.decode(response.body);
+        final newVehicle = resp['data'];
+        print(newVehicle);
 
         // Update the vehicle list in the UI
+        print(newVehicle);
         setState(() {
           vehicleList.add(Vehicle(
             id: newVehicle['id'],

@@ -1,5 +1,6 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/progressBar.dart';
+import 'package:fastpool_fe/context/authContext.dart';
 import 'package:fastpool_fe/pages/rideFinalization.dart';
 import 'package:flutter/material.dart';
 
@@ -12,33 +13,19 @@ class SelectVehicle extends StatefulWidget {
 
 class _SelectVehicleState extends State<SelectVehicle> {
   int? _selectedVehicleIndex;
+  List<Map<String, dynamic>> _vehicles = [];
 
-  final List<Map<String, String>> _vehicles = [
-    {
-      'name': 'Honda City',
-      'type': 'Car',
-      'regNumber': 'ABC-123',
-      'capacity': '4',
-      'ac': 'Yes',
-      'image': 'honda_city.png', // You can add image paths here
-    },
-    {
-      'name': 'Suzuki Alto',
-      'type': 'Car',
-      'regNumber': 'XYZ-123',
-      'capacity': '4',
-      'ac': 'Yes',
-      'image': 'suzuki_alto.png',
-    },
-    {
-      'name': 'Honda Cd-70',
-      'type': 'Bike',
-      'regNumber': 'DEF-123',
-      'capacity': '2',
-      'ac': 'No',
-      'image': 'honda_cd70.png',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchVehicles();
+  }
+
+  void _fetchVehicles() {
+    final cachedVehicles = AuthContext.getCachedVehicleInfo();
+    _vehicles = cachedVehicles ?? [];
+    print(_vehicles);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,121 +45,139 @@ class _SelectVehicleState extends State<SelectVehicle> {
       bottomNavigationBar: ProgressBar(initialStep: 1),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Divider(
-              color: Colors.white24, // Divider color
-              thickness: 1, // Divider thickness
-              height: 1, // Space occupied by the divider
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _vehicles.length,
-                itemBuilder: (context, index) {
-                  final vehicle = _vehicles[index];
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedVehicleIndex = index;
-                      });
-                      // You can add additional logic here when a vehicle is selected
-                    },
-                    child: Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(
-                              0xFF1C1C1E), // Updated field background color
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: _selectedVehicleIndex == index
-                                ? Colors.blue
-                                : Colors.grey.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                vehicle['name']!,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      Color(0xFFD1D1D6), // Updated text color
-                                  fontFamily: "Poppins",
+        child: _vehicles.isEmpty
+            ? const Center(
+                child:
+                    CircularProgressIndicator(), // Show loader if vehicles are not loaded
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(
+                    color: Colors.white24, // Divider color
+                    thickness: 1, // Divider thickness
+                    height: 1, // Space occupied by the divider
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _vehicles.length,
+                      itemBuilder: (context, index) {
+                        final vehicle = _vehicles[index];
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedVehicleIndex = index;
+                            });
+                            // You can add additional logic here when a vehicle is selected
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            elevation: 8,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                    0xFF1C1C1E), // Updated field background color
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: _selectedVehicleIndex == index
+                                      ? Colors.blue
+                                      : Colors.grey.withOpacity(0.2),
+                                  width: 1,
                                 ),
                               ),
-                              const Divider(
-                                color: Colors.white24, // Divider color
-                                thickness: 1, // Divider thickness
-                                height: 16, // Space occupied by the divider
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      vehicle['name']!,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(
+                                            0xFFD1D1D6), // Updated text color
+                                        fontFamily: "Poppins",
+                                      ),
+                                    ),
+                                    const Divider(
+                                      color: Colors.white24, // Divider color
+                                      thickness: 1, // Divider thickness
+                                      height:
+                                          16, // Space occupied by the divider
+                                    ),
+                                    _buildVehicleDetailRow(
+                                        'Type', vehicle['type']!),
+                                    const SizedBox(height: 8),
+                                    _buildVehicleDetailRow('Reg #',
+                                        vehicle['registration_number']!),
+                                    const SizedBox(height: 8),
+                                    _buildVehicleDetailRow('Capacity',
+                                        vehicle['capacity']!.toString()),
+                                    const SizedBox(height: 8),
+                                    _buildVehicleDetailRow(
+                                        'A.C', vehicle['AC']! ? 'Yes' : 'No'),
+                                    const Divider(
+                                      color: Colors.white24, // Divider color
+                                      thickness: 1, // Divider thickness
+                                      height:
+                                          16, // Space occupied by the divider
+                                    ),
+                                  ],
+                                ),
                               ),
-                              _buildVehicleDetailRow('Type', vehicle['type']!),
-                              const SizedBox(height: 8),
-                              _buildVehicleDetailRow(
-                                  'Reg #', vehicle['regNumber']!),
-                              const SizedBox(height: 8),
-                              _buildVehicleDetailRow(
-                                  'Capacity', vehicle['capacity']!),
-                              const SizedBox(height: 8),
-                              _buildVehicleDetailRow('A.C', vehicle['ac']!),
-                              const Divider(
-                                color: Colors.white24, // Divider color
-                                thickness: 1, // Divider thickness
-                                height: 16, // Space occupied by the divider
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  if (_selectedVehicleIndex != null)
+                    Center(
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width *
+                            0.8, // Make the button less wide
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RideFinalization(),
+                                settings: RouteSettings(
+                                  arguments: {
+                                    'id': _vehicles[_selectedVehicleIndex!]
+                                        ['id'],
+                                    'capacity':
+                                        _vehicles[_selectedVehicleIndex!]
+                                            ['capacity'],
+                                  },
+                                ),
                               ),
-                            ],
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text(
+                            'Next', // Changed text to "Next"
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontFamily: "Poppins"),
                           ),
                         ),
                       ),
                     ),
-                  );
-                },
+                ],
               ),
-            ),
-            if (_selectedVehicleIndex != null)
-              Center(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width *
-                      0.8, // Make the button less wide
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RideFinalization(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text(
-                      'Next', // Changed text to "Next"
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: "Poppins"),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
       ),
     );
   }

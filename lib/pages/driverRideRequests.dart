@@ -1,72 +1,141 @@
+import 'package:fastpool_fe/context/AuthContext.dart';
 import 'package:flutter/material.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/DriverNavBar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-class DriverRideRequests extends StatelessWidget {
-  const DriverRideRequests({super.key});
+class Rider {
+  final String username;
+  final String email;
+  final String gender;
+  final String phone;
+  final String profilePic;
+  final double riderRating;
 
-  final List<Map<String, dynamic>> rideRequests = const [
-    {
-      'name': 'Ali Haider',
-      'email': 'l226666@lhr.nu.edu.pk',
-      'pickup': 'Askari 11',
-      'time': 'Monday, 8:30',
-      'rating': 4.4,
-      'profileUrl': 'assets/images/Login.png',
-      'rideDetails': {
-        'Source': 'Askari 11',
-        'Destination': 'Destination Placeholder',
-        'Time': 'Monday, 8:30',
-        'Preferred Gender': 'Gender Placeholder',
-        'Amount': 'Amount Placeholder',
-        'Payment Option': 'Payment Placeholder',
-        'Vehicle Type': 'Vehicle Placeholder',
-        'Registration #': 'Reg# Placeholder',
-        'Available Seats': 'Seats Placeholder',
-        'AC': 'AC Placeholder',
-      },
-    },
-    {
-      'name': 'Sara Khan',
-      'email': 'sara.k@lhr.nu.edu.pk',
-      'pickup': 'DHA Phase 5',
-      'time': 'Tuesday, 9:00',
-      'rating': 4.7,
-      'profileUrl': 'assets/images/Login.png',
-      'rideDetails': {
-        'Source': 'DHA Phase 5',
-        'Destination': 'Destination Placeholder',
-        'Time': 'Tuesday, 9:00',
-        'Preferred Gender': 'Gender Placeholder',
-        'Amount': 'Amount Placeholder',
-        'Payment Option': 'Payment Placeholder',
-        'Vehicle Type': 'Vehicle Placeholder',
-        'Registration #': 'Reg# Placeholder',
-        'Available Seats': 'Seats Placeholder',
-        'AC': 'AC Placeholder',
-      },
-    },
-    {
-      'name': 'Ahmed Raza',
-      'email': 'ahmed.r@lhr.nu.edu.pk',
-      'pickup': 'Gulberg III',
-      'time': 'Wednesday, 8:00',
-      'rating': 4.9,
-      'profileUrl': 'assets/images/Login.png',
-      'rideDetails': {
-        'Source': 'Gulberg III',
-        'Destination': 'Destination Placeholder',
-        'Time': 'Wednesday, 8:00',
-        'Preferred Gender': 'Gender Placeholder',
-        'Amount': 'Amount Placeholder',
-        'Payment Option': 'Payment Placeholder',
-        'Vehicle Type': 'Vehicle Placeholder',
-        'Registration #': 'Reg# Placeholder',
-        'Available Seats': 'Seats Placeholder',
-        'AC': 'AC Placeholder',
-      },
-    },
-  ];
+  Rider({
+    required this.username,
+    required this.email,
+    required this.gender,
+    required this.phone,
+    required this.profilePic,
+    required this.riderRating,
+  });
+}
+
+class Request {
+  final int id;
+  final int rideId; // Added ride_id attribute
+  final String pickup;
+  final String pickupTime;
+  String status;
+  final Rider rider;
+
+  Request({
+    required this.id,
+    required this.rideId, // Added ride_id to constructor
+    required this.pickup,
+    required this.pickupTime,
+    required this.status,
+    required this.rider,
+  });
+}
+
+class DriverRideRequests extends StatefulWidget {
+  const DriverRideRequests({Key? key}) : super(key: key);
+
+  @override
+  State<DriverRideRequests> createState() => _DriverRideRequestsState();
+}
+
+class _DriverRideRequestsState extends State<DriverRideRequests> {
+  bool isLoading = true;
+  List<Request> requests = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchRequests();
+  }
+
+  Future<void> fetchRequests() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    final token = AuthContext.getToken();
+
+    if (token == null || baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Authentication token or BASE_URL is missing.')),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/ride/requests/?role=driver'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final results = data['results'] ?? [];
+
+        if (results.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No requests available.')),
+          );
+        } else {
+          List<Request> tempRequests = [];
+          for (var req in results) {
+            final riderData = req['rider'];
+            final rider = Rider(
+              username: riderData['username'] ?? 'Unknown',
+              email: riderData['email'] ?? 'Unknown',
+              gender: riderData['gender'] ?? 'Unknown',
+              phone: riderData['phone'] ?? 'Unknown',
+              profilePic: riderData['profile_pic'] ?? '',
+              riderRating: (riderData['rider_rating'] ?? 0).toDouble(),
+            );
+
+            tempRequests.add(Request(
+              id: req['id'] ?? 0,
+              rideId: req['ride'] ?? 0, // Added ride_id
+              pickup: req['pickup'] ?? 'Unknown',
+              pickupTime: req['pickup_time'] ?? 'Unknown',
+              status: req['status'] ?? 'Unknown',
+              rider: rider,
+            ));
+          }
+
+          setState(() {
+            requests = tempRequests;
+          });
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Failed to fetch requests: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,318 +154,211 @@ class DriverRideRequests extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: rideRequests.map((ride) {
-              return Column(
-                children: [
-                  RideRequestCard(
-                    name: ride['name'],
-                    email: ride['email'],
-                    pickup: ride['pickup'],
-                    time: ride['time'],
-                    rating: ride['rating'],
-                    profileUrl: ride['profileUrl'],
-                    rideDetails: ride['rideDetails'],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              );
-            }).toList(),
-          ),
-        ),
-      ),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.blue),
+            )
+          : RefreshIndicator(
+              onRefresh: fetchRequests, // Add pull-to-refresh functionality
+              child: requests.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No requests available',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: requests.length,
+                      itemBuilder: (context, index) {
+                        final request = requests[index];
+                        return RideRequestCard(request: request);
+                      },
+                    ),
+            ),
       bottomNavigationBar: DriverNavbar(initialIndex: 3),
     );
   }
 }
 
-class RideRequestCard extends StatelessWidget {
-  final String name;
-  final String email;
-  final String pickup;
-  final String time;
-  final double rating;
-  final String profileUrl;
+class RideRequestCard extends StatefulWidget {
+  final Request request;
 
-  final Map<String, String> rideDetails;
+  const RideRequestCard({Key? key, required this.request}) : super(key: key);
 
-  const RideRequestCard({
-    super.key,
-    required this.name,
-    required this.email,
-    required this.pickup,
-    required this.time,
-    required this.rating,
-    required this.profileUrl,
-    required this.rideDetails, // Added ride details map
-  });
+  @override
+  State<RideRequestCard> createState() => _RideRequestCardState();
+}
+
+class _RideRequestCardState extends State<RideRequestCard> {
+  bool isExpanded = false;
+
+  Future<void> handleRequest(String endpoint) async {
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    final token = AuthContext.getToken();
+
+    if (token == null || baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Authentication token or BASE_URL is missing.')),
+      );
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/ride/requests/$endpoint/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'id': widget.request.id}),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Request ${endpoint == 'accept' ? 'accepted' : 'declined'} successfully.')),
+        );
+
+        setState(() {
+          widget.request.status =
+              endpoint == 'accept' ? 'Accepted' : 'Declined'; // Update status
+          isExpanded = false; // Shrink the card
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'Failed to ${endpoint == 'accept' ? 'accept' : 'decline'} request: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    Color cardColor = const Color(0xFF2C2C2C);
-
-    return StatefulBuilder(
-      builder: (context, setState) {
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              cardColor = Colors.blueGrey; // Change color on click
-            });
-
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  backgroundColor: const Color(0xFF2C2C2C),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20), // Rounded corners
-                  ),
-                  title: Column(
-                    children: const [
-                      Center(
-                        child: Text(
-                          'Ride Details',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Divider(color: Colors.white70), // Added divider
-                    ],
-                  ),
-                  content: SingleChildScrollView(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(
-                            0xFF3A3A3A), // Lighter background for details
-                        borderRadius:
-                            BorderRadius.circular(16), // Rounded corners
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: rideDetails.entries.map((entry) {
-                          return Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('${entry.key}:',
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 16,
-                                        fontFamily: 'Poppins',
-                                      )),
-                                  Flexible(
-                                    child: Text(entry.value,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontFamily: 'Poppins',
-                                        ),
-                                        overflow: TextOverflow.ellipsis),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                            ],
-                          );
-                        }).toList(),
-                      ),
+    return Card(
+      color: const Color(0xFF2C2C2C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: widget.request.status.toLowerCase() == 'pending'
+                  ? () {
+                      setState(() {
+                        isExpanded = !isExpanded;
+                      });
+                    }
+                  : null, // Disable tap if status is not "Pending"
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Name: ${widget.request.rider.username}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
                     ),
                   ),
-                  actions: [
-                    Column(
-                      children: [
-                        Center(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Add functionality for pending requests
-                              print('See Pending Requests button clicked');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: const Text(
-                              'See Pending Requests',
-                              style: TextStyle(
-                                  color: Colors.white, fontFamily: 'Poppins'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Divider(
-                            color: Colors.white70), // Divider after button
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                // Add functionality for delete button
-                                print('Delete button clicked');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 24), // Increased size
-                              ),
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(
-                                    color: Colors.white, fontFamily: 'Poppins'),
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Add functionality for edit button
-                                print('Edit button clicked');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 24), // Increased size
-                              ),
-                              child: const Text(
-                                'Edit',
-                                style: TextStyle(
-                                    color: Colors.white, fontFamily: 'Poppins'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Email: ${widget.request.rider.email}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
                     ),
-                  ],
-                );
-              },
-            );
-          },
-          child: Column(
-            children: [
-              Card(
-                color: const Color(0xFF2C2C2C), // Reverted to original color
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 35,
-                        backgroundImage: AssetImage(profileUrl),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                fontFamily: 'Poppins',
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.email,
-                                    color: Colors.white70, size: 16),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    email,
-                                    style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins'),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on,
-                                    color: Colors.white70, size: 16),
-                                const SizedBox(width: 6),
-                                Text(pickup,
-                                    style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins')),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.access_time,
-                                    color: Colors.white70, size: 16),
-                                const SizedBox(width: 6),
-                                Text(time,
-                                    style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontFamily: 'Poppins')),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            rating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pickup: ${widget.request.pickup}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pickup Time: ${widget.request.pickupTime}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Status: ${widget.request.status}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                ],
               ),
+            ),
+            if (isExpanded) ...[
               const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () => handleRequest('accept'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Accept',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => handleRequest('deny'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Decline',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: 'Poppins',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 }

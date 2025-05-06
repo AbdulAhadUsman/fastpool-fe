@@ -1,6 +1,10 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/progressBar.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class RideFinalization extends StatefulWidget {
   const RideFinalization({super.key});
@@ -15,10 +19,32 @@ class _RideFinalizationState extends State<RideFinalization> {
   DateTime _selectedDate = DateTime.now();
   int _seats = 4;
   bool _acEnabled = true;
-  String _preferredGender = 'All';
+  String _preferredGender = 'Any';
   bool _isFree = false;
-  double _amount = 100;
+  int _amount = 100; // Change _amount to int
   String _paymentOption = 'Cash';
+  String _description = '';
+  final TextEditingController _descriptionController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _descriptionController.text =
+        _description; // Initialize controller with _description
+    _descriptionController.addListener(() {
+      setState(() {
+        _description =
+            _descriptionController.text; // Update _description on change
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _descriptionController
+        .dispose(); // Dispose controller to avoid memory leaks
+    super.dispose();
+  }
 
   Future<void> _selectTime(BuildContext context) async {
     final TimeOfDay? picked = await showTimePicker(
@@ -45,6 +71,73 @@ class _RideFinalizationState extends State<RideFinalization> {
       setState(() {
         _selectedDate = picked;
       });
+    }
+  }
+
+  Future<void> _confirmRide() async {
+    final baseUrl = dotenv.env['BASE_URL']; // Get base URL from env file
+    final selectedVehicle = ModalRoute.of(context)?.settings.arguments
+        as Map<String, dynamic>?; // Pass vehicle data from previous page
+    if (selectedVehicle == null) {
+      print('No vehicle selected');
+      return;
+    }
+
+    final token = AuthContext.getToken(); // Retrieve token from AuthContext
+
+    // Combine date and time to create DateTime objects
+    final DateTime selectedDateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _isAM ? _selectedTime.hour : (_selectedTime.hour % 12) + 12,
+      _selectedTime.minute,
+    );
+
+    final body = {
+      'source_lat': '0.0', // Replace with actual source latitude
+      'source_lng': '0.0', // Replace with actual source longitude
+      'destination_lat': '0.0', // Replace with actual destination latitude
+      'destination_lng': '0.0', // Replace with actual destination longitude
+      'vehicle': selectedVehicle['id'], // Vehicle ID from SelectVehicle page
+      'time': selectedDateTime
+          .toIso8601String()
+          .substring(11, 19), // Format as hh:mm:ss
+      'capacity':
+          selectedVehicle['capacity'], // Capacity of the selected vehicle
+      'available_seats': _seats,
+      'amount': _isFree ? 0 : _amount, // Ensure amount is sent as an integer
+      'preferred_gender':
+          _preferredGender, // Convert to lowercase (e.g., "male", "female", "all")
+      'payment_option': _paymentOption,
+      'expiration_time': selectedDateTime
+          .toIso8601String()
+          .substring(11, 19), // Format as hh:mm:ss
+      'date': _selectedDate
+          .toIso8601String()
+          .substring(0, 10), // Format as YYYY-MM-DD
+      'description': _description,
+    };
+    print(body);
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/rides/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json', // Explicitly set Content-Type
+        },
+        body: jsonEncode(body), // Ensure body is JSON-encoded
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Ride confirmed successfully');
+        Navigator.pop(context); // Navigate back or to a success page
+      } else {
+        print('Failed to confirm ride: ${response.body}');
+      }
+    } catch (e) {
+      print('Error confirming ride: $e');
     }
   }
 
@@ -278,7 +371,7 @@ class _RideFinalizationState extends State<RideFinalization> {
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: _preferredGender,
-              items: ['Male', 'Female', 'All']
+              items: ['Male', 'Female', 'Any']
                   .map((value) => DropdownMenuItem(
                         value: value,
                         child: Text(value),
@@ -340,7 +433,7 @@ class _RideFinalizationState extends State<RideFinalization> {
                     controller: TextEditingController(text: _amount.toString()),
                     onChanged: (value) {
                       setState(() {
-                        _amount = double.tryParse(value) ?? 0;
+                        _amount = int.tryParse(value) ?? 0; // Parse as int
                       });
                     },
                     decoration: const InputDecoration(
@@ -434,6 +527,43 @@ class _RideFinalizationState extends State<RideFinalization> {
               dropdownColor: Color(
                   0xFF282828), // Match dropdown menu background to text field box
             ),
+            const Divider(height: 40),
+            const Text(
+              'Description',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _descriptionController, // Use the controller
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Enter a description',
+                labelStyle: TextStyle(
+                    color: AppColors.textColor), // Updated label color
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: AppColors
+                          .backgroundColor), // Match border color to background
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color:
+                          Colors.blue), // Set border color to blue when focused
+                ),
+                hintStyle:
+                    TextStyle(color: AppColors.textColor), // Updated hint color
+                fillColor: Color(0xFF282828), // Updated background color
+                filled: true,
+              ),
+              style: TextStyle(
+                  color: AppColors
+                      .textColor), // Set text color to AppColors.textColor
+            ),
             const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
@@ -445,18 +575,7 @@ class _RideFinalizationState extends State<RideFinalization> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: () {
-                  // Submit the finalization
-                  print('''
-                    Time: ${_selectedTime.hour}:${_selectedTime.minute} ${_isAM ? 'AM' : 'PM'}
-                    Date: ${_selectedDate.day}-${_selectedDate.month}-${_selectedDate.year}
-                    Seats: $_seats
-                    AC: ${_acEnabled ? 'On' : 'Off'}
-                    Preferred Gender: $_preferredGender
-                    Amount: ${_isFree ? 'Free' : 'Rs $_amount'}
-                    Payment Option: $_paymentOption
-                  ''');
-                },
+                onPressed: _confirmRide,
                 child: const Text(
                   'Confirm Ride',
                   style: TextStyle(

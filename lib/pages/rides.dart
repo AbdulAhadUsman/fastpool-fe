@@ -27,6 +27,7 @@ class Vehicle {
 }
 
 class Ride {
+  final int id; // Added id attribute
   final String pickup;
   final String destination;
   final int seats;
@@ -39,6 +40,7 @@ class Ride {
   final Vehicle vehicle;
 
   Ride({
+    required this.id, // Added id to constructor
     required this.pickup,
     required this.destination,
     required this.seats,
@@ -113,6 +115,7 @@ class _MyRidesState extends State<MyRides> {
             );
 
             preparedRides.add(Ride(
+              id: ride['id'], // Added id from database
               pickup: source,
               destination: destination,
               seats: ride['capacity'] - ride['available_seats'],
@@ -148,6 +151,7 @@ class _MyRidesState extends State<MyRides> {
             );
 
             preparedRides.add(Ride(
+              id: ride['id'], // Added id from database
               pickup: source,
               destination: destination,
               seats: ride['capacity'] - ride['available_seats'],
@@ -312,13 +316,20 @@ class RideCard extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  RideRequestsPage(rideId: ride.vehicle.id),
-                            ),
-                          );
+                          if (ride.vehicle.id != null) {
+                            // Ensure ride.vehicle.id is valid
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    RideRequestsPage(rideId: ride.id),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Invalid ride ID.')),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
