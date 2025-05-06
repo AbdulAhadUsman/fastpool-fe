@@ -51,7 +51,10 @@ class _NewRideState extends State<NewRide> {
                     ),
                     child: const Text(
                       "Upload Ride",
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "Poppins", // Added fontFamily
+                      ),
                     ),
                   ),
                 ),
@@ -59,7 +62,7 @@ class _NewRideState extends State<NewRide> {
             ),
           ),
         ),
-        bottomNavigationBar: DriverNavbar(initial_index: 2),
+        bottomNavigationBar: DriverNavbar(initialIndex: 2),
       ),
     );
   }

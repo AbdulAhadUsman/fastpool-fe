@@ -53,8 +53,8 @@ class _RideFinalizationState extends State<RideFinalization> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Select Vehicle",
-          style: TextStyle(color: Colors.white),
+          "Finalization",
+          style: TextStyle(color: Colors.white, fontFamily: "Poppins"),
         ),
         backgroundColor: AppColors.backgroundColor,
         centerTitle: true,
@@ -79,7 +79,8 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
@@ -96,20 +97,26 @@ class _RideFinalizationState extends State<RideFinalization> {
                     decoration: const InputDecoration(
                       labelText: 'Hour Minute',
                       labelStyle: TextStyle(
-                          color: Colors.grey), // Updated label color to grey
+                          color: AppColors.textColor), // Updated label color
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
+                            color: AppColors
+                                .backgroundColor), // Match border color to background
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            color: Colors.blue), // Default focused border color
+                            color: Colors
+                                .blue), // Set border color to blue when focused
                       ),
-                      hintStyle:
-                          TextStyle(color: Colors.white), // Inside text color
-                      fillColor: Colors.grey, // Background color for text field
+                      hintStyle: TextStyle(
+                          color: AppColors
+                              .textColor), // Explicitly set hint color to AppColors.textColor
+                      fillColor: Color(0xFF282828), // Updated background color
                       filled: true,
                     ),
+                    style: TextStyle(
+                        color: AppColors
+                            .textColor), // Set text color to AppColors.textColor
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -120,6 +127,9 @@ class _RideFinalizationState extends State<RideFinalization> {
                       _isAM = index == 0;
                     });
                   },
+                  color: AppColors.textColor, // Default text color
+                  selectedColor: Colors.white, // Text color when selected
+                  fillColor: Colors.blue, // Background color when selected
                   children: const [
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -139,7 +149,8 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
@@ -153,19 +164,25 @@ class _RideFinalizationState extends State<RideFinalization> {
               decoration: const InputDecoration(
                 labelText: 'Date',
                 labelStyle: TextStyle(
-                    color: Colors.grey), // Updated label color to grey
+                    color: AppColors.textColor), // Updated label color
                 enabledBorder: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: Colors.grey), // Default border color
+                  borderSide: BorderSide(
+                      color: AppColors
+                          .backgroundColor), // Match border color to background
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                      color: Colors.blue), // Default focused border color
+                      color:
+                          Colors.blue), // Set border color to blue when focused
                 ),
-                hintStyle: TextStyle(color: Colors.white), // Inside text color
-                fillColor: Colors.grey, // Background color for text field
+                hintStyle:
+                    TextStyle(color: AppColors.textColor), // Updated hint color
+                fillColor: Color(0xFF282828), // Updated background color
                 filled: true,
               ),
+              style: TextStyle(
+                  color: AppColors
+                      .textColor), // Set text color to AppColors.textColor
             ),
             const Divider(height: 40),
             const Text(
@@ -173,7 +190,8 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
@@ -191,17 +209,29 @@ class _RideFinalizationState extends State<RideFinalization> {
                 });
               },
               decoration: const InputDecoration(
-                border: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: Colors.grey), // Default border color
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: AppColors
+                          .backgroundColor), // Match border color to background
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color:
+                          Colors.blue), // Set border color to blue when focused
                 ),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12),
                 labelStyle: TextStyle(
-                    color: Colors.grey), // Updated label color to grey
-                hintStyle: TextStyle(color: Colors.white), // Inside text color
-                fillColor: Colors.grey, // Background color for text field
+                    color: AppColors.textColor), // Updated label color
+                hintStyle:
+                    TextStyle(color: AppColors.textColor), // Updated hint color
+                fillColor: Color(0xFF282828), // Updated background color
                 filled: true,
               ),
+              style: TextStyle(
+                  color: AppColors
+                      .textColor), // Set text color to AppColors.textColor
+              dropdownColor: Color(
+                  0xFF282828), // Match dropdown menu background to text field box
             ),
             const Divider(height: 40),
             const Text(
@@ -209,7 +239,8 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
@@ -220,6 +251,9 @@ class _RideFinalizationState extends State<RideFinalization> {
                   _acEnabled = index == 0;
                 });
               },
+              color: AppColors.textColor, // Default text color
+              selectedColor: Colors.white, // Text color when selected
+              fillColor: Colors.blue, // Background color when selected
               children: const [
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
@@ -237,7 +271,8 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
@@ -255,17 +290,29 @@ class _RideFinalizationState extends State<RideFinalization> {
                 });
               },
               decoration: const InputDecoration(
-                border: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: Colors.grey), // Default border color
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: AppColors
+                          .backgroundColor), // Match border color to background
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color:
+                          Colors.blue), // Set border color to blue when focused
                 ),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12),
                 labelStyle: TextStyle(
-                    color: Colors.grey), // Updated label color to grey
-                hintStyle: TextStyle(color: Colors.white), // Inside text color
-                fillColor: Colors.grey, // Background color for text field
+                    color: AppColors.textColor), // Updated label color
+                hintStyle:
+                    TextStyle(color: AppColors.textColor), // Updated hint color
+                fillColor: Color(0xFF282828), // Updated background color
                 filled: true,
               ),
+              style: TextStyle(
+                  color: AppColors
+                      .textColor), // Set text color to AppColors.textColor
+              dropdownColor: Color(
+                  0xFF282828), // Match dropdown menu background to text field box
             ),
             const Divider(height: 40),
             const Text(
@@ -273,13 +320,18 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Rs', style: TextStyle(fontSize: 16)),
+                const Text('Rs',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: "Poppins",
+                        color: AppColors.textColor)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
@@ -294,20 +346,25 @@ class _RideFinalizationState extends State<RideFinalization> {
                     decoration: const InputDecoration(
                       labelText: 'Amount',
                       labelStyle: TextStyle(
-                          color: Colors.grey), // Updated label color to grey
+                          color: AppColors.textColor), // Updated label color
                       enabledBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            color: Colors.grey), // Default border color
+                            color: AppColors
+                                .backgroundColor), // Match border color to background
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(
-                            color: Colors.blue), // Default focused border color
+                            color: Colors
+                                .blue), // Set border color to blue when focused
                       ),
-                      hintStyle:
-                          TextStyle(color: Colors.white), // Inside text color
-                      fillColor: Colors.grey, // Background color for text field
+                      hintStyle: TextStyle(
+                          color: AppColors.textColor), // Updated hint color
+                      fillColor: Color(0xFF282828), // Updated background color
                       filled: true,
                     ),
+                    style: TextStyle(
+                        color: AppColors
+                            .textColor), // Set text color to AppColors.textColor
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -319,7 +376,13 @@ class _RideFinalizationState extends State<RideFinalization> {
                     });
                   },
                 ),
-                const Text('Free'),
+                const Text(
+                  'Free',
+                  style: TextStyle(
+                    fontFamily: "Poppins",
+                    color: AppColors.textColor, // Updated text color
+                  ),
+                ),
               ],
             ),
             const Divider(height: 40),
@@ -328,7 +391,8 @@ class _RideFinalizationState extends State<RideFinalization> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white, // Updated text color to white
+                color: AppColors.textColor,
+                fontFamily: "Poppins",
               ),
             ),
             const SizedBox(height: 8),
@@ -346,22 +410,41 @@ class _RideFinalizationState extends State<RideFinalization> {
                 });
               },
               decoration: const InputDecoration(
-                border: OutlineInputBorder(
-                  borderSide:
-                      BorderSide(color: Colors.grey), // Default border color
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color: AppColors
+                          .backgroundColor), // Match border color to background
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                      color:
+                          Colors.blue), // Set border color to blue when focused
                 ),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12),
                 labelStyle: TextStyle(
-                    color: Colors.grey), // Updated label color to grey
-                hintStyle: TextStyle(color: Colors.white), // Inside text color
-                fillColor: Colors.grey, // Background color for text field
+                    color: AppColors.textColor), // Updated label color
+                hintStyle:
+                    TextStyle(color: AppColors.textColor), // Updated hint color
+                fillColor: Color(0xFF282828), // Updated background color
                 filled: true,
               ),
+              style: TextStyle(
+                  color: AppColors
+                      .textColor), // Set text color to AppColors.textColor
+              dropdownColor: Color(
+                  0xFF282828), // Match dropdown menu background to text field box
             ),
             const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
                 onPressed: () {
                   // Submit the finalization
                   print('''
@@ -374,7 +457,15 @@ class _RideFinalizationState extends State<RideFinalization> {
                     Payment Option: $_paymentOption
                   ''');
                 },
-                child: const Text('Confirm Ride'),
+                child: const Text(
+                  'Confirm Ride',
+                  style: TextStyle(
+                    fontFamily: "Poppins",
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // Set text color to white
+                  ),
+                ),
               ),
             ),
           ],

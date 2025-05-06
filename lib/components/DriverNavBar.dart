@@ -1,132 +1,117 @@
-import 'package:flutter/material.dart';
+import 'package:fastpool_fe/pages/NewRide.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
-import 'package:fastpool_fe/pages/newRide.dart';
 import 'package:fastpool_fe/pages/driverProfile.dart';
 import 'package:fastpool_fe/pages/driverRideRequests.dart';
+import 'package:fastpool_fe/pages/rides.dart';
+import 'package:flutter/material.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
+import 'package:fastpool_fe/pages/riderExplore.dart';
+import 'package:fastpool_fe/pages/riderTrips.dart';
+import 'package:fastpool_fe/components/colors.dart';
+import 'package:fastpool_fe/pages/riderProfile.dart';
 
 class DriverNavbar extends StatefulWidget {
-  final initial_index;
-  const DriverNavbar({super.key, required this.initial_index});
+  final int initialIndex;
+  const DriverNavbar({super.key, required this.initialIndex});
 
   @override
   State<DriverNavbar> createState() => _DriverNavbarState();
 }
 
 class _DriverNavbarState extends State<DriverNavbar> {
-  final List<BottomNavigationBarItem> _bottomNavItems = const [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.directions_car),
-      label: 'Rides',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.add_circle, size: 30), // Moved "New Ride" here
-      label: 'New Ride',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person_search), // Moved "Requests" here
-      label: 'Requests',
-    ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person),
-      label: 'Profile',
-    ),
-  ];
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initial_index; // Set current index to initial index
+    _currentIndex = widget.initialIndex;
+  }
+
+  Future<void> _navigateTo(int index) async {
+    if (_currentIndex == index) return;
+
+    setState(() => _currentIndex = index);
+
+    Widget targetPage;
+    switch (index) {
+      case 0:
+        targetPage = const DriverHomePage();
+        break;
+      case 1:
+        targetPage = const MyRides();
+        break;
+      case 2:
+        targetPage = const NewRide();
+        break;
+      case 3:
+        targetPage = const DriverRideRequests();
+        break;
+      case 4:
+        targetPage = const DriverProfile();
+        break;
+      default:
+        return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => targetPage),
+    );
+
+    // After coming back, reset to current page or home
+    setState(() {
+      _currentIndex = widget.initialIndex; // Or 0 to default back to home
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    const backgroundColor = Color(0xFF282828);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 20),
+      // margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1F1F1F), // Matches the card background gradient
-        borderRadius: BorderRadius.circular(30), // Rounded edges
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(30),
       ),
-      child: ClipRRect(
-        borderRadius:
-            BorderRadius.circular(30), // Ensures content follows rounded edges
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            // Navigation logic
-            switch (index) {
-              case 0:
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const DriverHomePage()),
-                  (route) => false, // Clear the stack for the home page
-                ).then((_) {
-                  setState(() {
-                    _currentIndex = 0; // Update index for Home
-                  });
-                });
-                break;
-              case 1:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const DriverRideRequests()),
-                ).then((_) {
-                  setState(() {
-                    _currentIndex = 1; // Update index for Rides
-                  });
-                });
-                break;
-              case 2:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NewRide()),
-                ).then((_) {
-                  setState(() {
-                    _currentIndex = 2; // Update index for New Ride
-                  });
-                });
-                break;
-              case 3: // Corrected case for Requests
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const DriverRideRequests()),
-                ).then((_) {
-                  setState(() {
-                    _currentIndex = 3; // Update index for Requests
-                  });
-                });
-                break;
-              case 4:
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const DriverProfile()),
-                ).then((_) {
-                  setState(() {
-                    _currentIndex = 4; // Update index for Profile
-                  });
-                });
-                break;
-              default:
-                // Handle other cases if needed
-                break;
-            }
-          },
-          items: _bottomNavItems,
-          selectedItemColor: Colors.blue, // Changed to blue
-          unselectedItemColor:
-              Colors.white70, // Slightly faded white for unselected items
-          backgroundColor: Colors.transparent, // Transparent to match container
-          type: BottomNavigationBarType.fixed,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _navIcon(icon: Icons.home_rounded, index: 0),
+          _navIcon(icon: Icons.directions_car_rounded, index: 1),
+          _navIcon(icon: Icons.add_rounded, index: 2),
+          _navIcon(icon: Icons.person_search_rounded, index: 3),
+          _navIcon(icon: Icons.person_rounded, index: 4),
+        ],
       ),
+    );
+  }
+
+  Widget _navIcon({required IconData icon, required int index}) {
+    final isSelected = _currentIndex == index;
+
+    return GestureDetector(
+      onTap: () => _navigateTo(index),
+      child: isSelected
+          ? Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue, // Circular background
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white, // Icon inside is white
+                size: 26,
+              ),
+            )
+          : Icon(
+              icon,
+              color: Colors.white54, // Unselected icons
+              size: 28,
+            ),
     );
   }
 }

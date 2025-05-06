@@ -46,7 +46,7 @@ class _SelectVehicleState extends State<SelectVehicle> {
       appBar: AppBar(
         title: const Text(
           "Select Vehicle",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontFamily: "Poppins"),
         ),
         backgroundColor: AppColors.backgroundColor,
         centerTitle: true,
@@ -87,19 +87,8 @@ class _SelectVehicleState extends State<SelectVehicle> {
                       ),
                       child: Container(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: _selectedVehicleIndex == index
-                                ? [
-                                    Colors.blue.withOpacity(0.3),
-                                    Colors.blue.withOpacity(0.1)
-                                  ]
-                                : [
-                                    const Color(0xFF3A3A3A),
-                                    const Color(0xFF1F1F1F)
-                                  ],
-                          ),
+                          color: const Color(
+                              0xFF1C1C1E), // Updated field background color
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: _selectedVehicleIndex == index
@@ -118,16 +107,30 @@ class _SelectVehicleState extends State<SelectVehicle> {
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color:
+                                      Color(0xFFD1D1D6), // Updated text color
+                                  fontFamily: "Poppins",
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const Divider(
+                                color: Colors.white24, // Divider color
+                                thickness: 1, // Divider thickness
+                                height: 16, // Space occupied by the divider
+                              ),
                               _buildVehicleDetailRow('Type', vehicle['type']!),
+                              const SizedBox(height: 8),
                               _buildVehicleDetailRow(
                                   'Reg #', vehicle['regNumber']!),
+                              const SizedBox(height: 8),
                               _buildVehicleDetailRow(
                                   'Capacity', vehicle['capacity']!),
+                              const SizedBox(height: 8),
                               _buildVehicleDetailRow('A.C', vehicle['ac']!),
+                              const Divider(
+                                color: Colors.white24, // Divider color
+                                thickness: 1, // Divider thickness
+                                height: 16, // Space occupied by the divider
+                              ),
                             ],
                           ),
                         ),
@@ -160,7 +163,10 @@ class _SelectVehicleState extends State<SelectVehicle> {
                     ),
                     child: const Text(
                       'Next', // Changed text to "Next"
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontFamily: "Poppins"),
                     ),
                   ),
                 ),
@@ -177,13 +183,23 @@ class _SelectVehicleState extends State<SelectVehicle> {
       child: Row(
         children: [
           SizedBox(
-            width: 80,
+            width: 100, // Increased width for spacing
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: "Poppins",
+                  color: AppColors.textColor),
             ),
           ),
-          Text(value),
+          const SizedBox(width: 16), // Added space between label and value
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                  fontFamily: "Poppins", color: AppColors.textColor),
+            ),
+          ),
         ],
       ),
     );

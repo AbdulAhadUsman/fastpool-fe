@@ -18,9 +18,13 @@ class _LoginState extends State<Login> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  bool isLoading = false; // Add isLoading state
 
   void login() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        isLoading = true; // Disable the button
+      });
       try {
         final success = await AuthContext.login(
           emailController.text,
@@ -33,7 +37,8 @@ class _LoginState extends State<Login> {
         } else {
           // Show error message if login fails
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Login failed. Please check your credentials.')),
+            SnackBar(
+                content: Text('Login failed. Please check your credentials.')),
           );
         }
       } catch (e) {
@@ -41,6 +46,10 @@ class _LoginState extends State<Login> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An error occurred: $e')),
         );
+      } finally {
+        setState(() {
+          isLoading = false; // Re-enable the button
+        });
       }
     }
   }
@@ -214,7 +223,9 @@ class _LoginState extends State<Login> {
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     GestureDetector(
-                      onTap: () => login(),
+                      onTap: isLoading
+                          ? null
+                          : () => login(), // Disable tap if loading
                       child: Container(
                         height: screenHeight * 0.06,
                         margin: EdgeInsets.symmetric(
@@ -228,13 +239,16 @@ class _LoginState extends State<Login> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
-                          child: Text(
-                            "Login",
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.045,
-                                fontFamily: 'Poppins'),
-                          ),
+                          child: isLoading
+                              ? CircularProgressIndicator(
+                                  color: Colors.white) // Show loader
+                              : Text(
+                                  "Login",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenWidth * 0.045,
+                                      fontFamily: 'Poppins'),
+                                ),
                         ),
                       ),
                     ),

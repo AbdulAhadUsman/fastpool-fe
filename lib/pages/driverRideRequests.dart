@@ -77,7 +77,7 @@ class DriverRideRequests extends StatelessWidget {
         elevation: 0,
         title: const Text(
           'Ride Requests',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontFamily: 'Poppins'),
         ),
         centerTitle: true,
         leading: IconButton(
@@ -109,7 +109,7 @@ class DriverRideRequests extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: DriverNavbar(initial_index: 1),
+      bottomNavigationBar: DriverNavbar(initialIndex: 3),
     );
   }
 }
@@ -164,6 +164,7 @@ class RideRequestCard extends StatelessWidget {
                             color: Colors.white,
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
                           ),
                         ),
                       ),
@@ -194,12 +195,14 @@ class RideRequestCard extends StatelessWidget {
                                       style: const TextStyle(
                                         color: Colors.white70,
                                         fontSize: 16,
+                                        fontFamily: 'Poppins',
                                       )),
                                   Flexible(
                                     child: Text(entry.value,
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
+                                          fontFamily: 'Poppins',
                                         ),
                                         overflow: TextOverflow.ellipsis),
                                   ),
@@ -229,7 +232,8 @@ class RideRequestCard extends StatelessWidget {
                             ),
                             child: const Text(
                               'See Pending Requests',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                  color: Colors.white, fontFamily: 'Poppins'),
                             ),
                           ),
                         ),
@@ -256,7 +260,8 @@ class RideRequestCard extends StatelessWidget {
                               ),
                               child: const Text(
                                 'Delete',
-                                style: TextStyle(color: Colors.white),
+                                style: TextStyle(
+                                    color: Colors.white, fontFamily: 'Poppins'),
                               ),
                             ),
                             ElevatedButton(
@@ -275,7 +280,8 @@ class RideRequestCard extends StatelessWidget {
                               ),
                               child: const Text(
                                 'Edit',
-                                style: TextStyle(color: Colors.white),
+                                style: TextStyle(
+                                    color: Colors.white, fontFamily: 'Poppins'),
                               ),
                             ),
                           ],
@@ -290,7 +296,7 @@ class RideRequestCard extends StatelessWidget {
           child: Column(
             children: [
               Card(
-                color: cardColor,
+                color: const Color(0xFF2C2C2C), // Reverted to original color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -317,6 +323,7 @@ class RideRequestCard extends StatelessWidget {
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
+                                fontFamily: 'Poppins',
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -329,7 +336,9 @@ class RideRequestCard extends StatelessWidget {
                                   child: Text(
                                     email,
                                     style: const TextStyle(
-                                        color: Colors.white70, fontSize: 14),
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins'),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -343,7 +352,9 @@ class RideRequestCard extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Text(pickup,
                                     style: const TextStyle(
-                                        color: Colors.white70, fontSize: 14)),
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins')),
                               ],
                             ),
                             const SizedBox(height: 6),
@@ -354,7 +365,9 @@ class RideRequestCard extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Text(time,
                                     style: const TextStyle(
-                                        color: Colors.white70, fontSize: 14)),
+                                        color: Colors.white70,
+                                        fontSize: 14,
+                                        fontFamily: 'Poppins')),
                               ],
                             ),
                           ],
@@ -370,6 +383,7 @@ class RideRequestCard extends StatelessWidget {
                               color: Colors.white,
                               fontSize: 26,
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'Poppins',
                             ),
                           ),
                         ],

@@ -16,6 +16,7 @@ import 'dart:io';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AuthContext.init(); // Initialize Hive
+  await dotenv.load(fileName: ".env");
   runApp(MyApp());
 }
 

@@ -11,42 +11,40 @@ class SelectRoute extends StatefulWidget {
 }
 
 class _SelectRouteState extends State<SelectRoute> {
-  // int _currentStep = 1; // Change this value to update progress (0-2)
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           "Select Route",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontFamily: "Poppins"),
         ),
         backgroundColor: AppColors.backgroundColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(
-            color: Colors.white), // Set back button color to white
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       backgroundColor: AppColors.backgroundColor,
       body: Column(
         children: [
           const Divider(
-            color: Colors.white24, // Divider color
-            thickness: 1, // Divider thickness
-            height: 1, // Space occupied by the divider
+            color: Colors.white24,
+            thickness: 1,
+            height: 1,
           ),
-          const SizedBox(height: 20), // Add top padding
+          const SizedBox(height: 20),
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
-              style: const TextStyle(color: Colors.white), // Match text color
+              style:
+                  const TextStyle(color: Colors.white, fontFamily: "Poppins"),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.grey[850], // Match fill color
+                fillColor: Colors.grey[850],
                 labelText: "Starting Point",
-                labelStyle:
-                    const TextStyle(color: Colors.white70), // Label color
+                labelStyle: const TextStyle(
+                    color: Colors.white70, fontFamily: "Poppins"),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -57,13 +55,14 @@ class _SelectRouteState extends State<SelectRoute> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: TextField(
-              style: const TextStyle(color: Colors.white), // Match text color
+              style:
+                  const TextStyle(color: Colors.white, fontFamily: "Poppins"),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.grey[850], // Match fill color
+                fillColor: Colors.grey[850],
                 labelText: "Destination",
-                labelStyle:
-                    const TextStyle(color: Colors.white70), // Label color
+                labelStyle: const TextStyle(
+                    color: Colors.white70, fontFamily: "Poppins"),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -91,7 +90,8 @@ class _SelectRouteState extends State<SelectRoute> {
               ),
               child: const Text(
                 "Next",
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(
+                    color: Colors.white, fontSize: 16, fontFamily: "Poppins"),
               ),
             ),
           ),
