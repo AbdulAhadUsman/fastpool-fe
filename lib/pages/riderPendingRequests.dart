@@ -5,6 +5,7 @@ import 'package:fastpool_fe/services/api_client.dart';
 import '../helper-functions/reverseGeoLoc.dart';
 import '../pages/route_map_view.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 
 class RiderPendingRequestsPage extends StatefulWidget {
   const RiderPendingRequestsPage({super.key});
@@ -22,6 +23,7 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
   final ApiClient _apiClient = ApiClient();
   Map<int, bool> cancellingRequests =
       {}; // Track cancellation state for each request
+  Map<int, Map<String, String?>> addressCache = {};
 
   @override
   void initState() {
@@ -38,52 +40,57 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
 
       final requests = await _apiClient.fetchRiderRequests();
 
-      // Fetch addresses for each request
-      for (var request in requests) {
-        try {
-          if (request['pickup_lat'] != null && request['pickup_lng'] != null) {
-            request['pickup_address'] = await getAddressFromLatLng(
-              request['pickup_lat'],
-              request['pickup_lng'],
-            );
-          }
-
-          if (request['ride_details'] != null) {
-            if (request['ride_details']['source_lat'] != null &&
-                request['ride_details']['source_lng'] != null) {
-              request['ride_details']['source_address'] =
-                  await getAddressFromLatLng(
-                request['ride_details']['source_lat'],
-                request['ride_details']['source_lng'],
-              );
-            }
-
-            if (request['ride_details']['destination_lat'] != null &&
-                request['ride_details']['destination_lng'] != null) {
-              request['ride_details']['destination_address'] =
-                  await getAddressFromLatLng(
-                request['ride_details']['destination_lat'],
-                request['ride_details']['destination_lng'],
-              );
-            }
-          }
-        } catch (e) {
-          print('Error fetching address for request ${request['id']}: $e');
-          // Continue with next request even if this one fails
-          continue;
-        }
-      }
-
       setState(() {
         pendingRequests = requests;
         isLoading = false;
       });
+
+      // Load addresses asynchronously
+      for (var request in requests) {
+        _loadAddressesForRequest(request);
+      }
     } catch (e) {
       setState(() {
         errorMessage = 'Failed to load requests: $e';
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadAddressesForRequest(Map<String, dynamic> request) async {
+    final int requestId = request['id'];
+    if (addressCache[requestId] != null) return;
+
+    try {
+      final pickupAddress = await getAddressFromLatLng(
+        request['pickup_lat'],
+        request['pickup_lng'],
+      );
+
+      final sourceAddress = await getAddressFromLatLng(
+        request['ride_details']['source_lat'],
+        request['ride_details']['source_lng'],
+      );
+
+      final destinationAddress = await getAddressFromLatLng(
+        request['ride_details']['destination_lat'],
+        request['ride_details']['destination_lng'],
+      );
+
+      setState(() {
+        addressCache[requestId] = {
+          'pickup_address': pickupAddress,
+          'source_address': sourceAddress,
+          'destination_address': destinationAddress,
+        };
+      });
+    } catch (e) {
+      print('Error loading addresses for request $requestId: $e');
+    }
+  }
+
+  String? _getAddress(int requestId, String type) {
+    return addressCache[requestId]?[type];
   }
 
   String _formatTime(String time) {
@@ -193,6 +200,26 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
         // Remove from expanded cards if it was expanded
         expandedCards.remove(request['id']);
       });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Request cancelled successfully',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.white,
+              ),
+            ),
+            backgroundColor: Color(0xFF2C2C2C),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+          ),
+        );
+      }
     } catch (e) {
       setState(() {
         cancellingRequests.remove(request['id']);
@@ -208,6 +235,11 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
               ),
             ),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
           ),
         );
       }
@@ -245,6 +277,54 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
+    );
+  }
+
+  Widget _buildShimmerCard() {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF2C2C2C),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Shimmer.fromColors(
+        baseColor: const Color(0xFF3A3A3A),
+        highlightColor: const Color(0xFF4A4A4A),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                height: 14,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 14,
+                width: 200,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -392,8 +472,10 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
                                   const SizedBox(height: 12),
                                   _buildInfoRow(
                                     'Pickup At',
-                                    request['pickup_address'] ??
-                                        'Address not available',
+                                    _getAddress(
+                                        request['id'], 'pickup_address'),
+                                    isLoading:
+                                        addressCache[request['id']] == null,
                                   ),
                                   _buildInfoRow(
                                     'Time',
@@ -407,15 +489,17 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
                                     ),
                                     _buildInfoRow(
                                       'From',
-                                      request['ride_details']
-                                              ?['source_address'] ??
-                                          'Address not available',
+                                      _getAddress(
+                                          request['id'], 'source_address'),
+                                      isLoading:
+                                          addressCache[request['id']] == null,
                                     ),
                                     _buildInfoRow(
                                       'To',
-                                      request['ride_details']
-                                              ?['destination_address'] ??
-                                          'Address not available',
+                                      _getAddress(
+                                          request['id'], 'destination_address'),
+                                      isLoading:
+                                          addressCache[request['id']] == null,
                                     ),
                                     _buildInfoRow(
                                       'Departure',
@@ -539,7 +623,8 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, {bool isHeader = false}) {
+  Widget _buildInfoRow(String label, String? value,
+      {bool isHeader = false, bool isLoading = false}) {
     if (isHeader) {
       return Column(
         children: [
@@ -590,15 +675,27 @@ class _RiderPendingRequestsPageState extends State<RiderPendingRequestsPage> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            child: isLoading
+                ? Shimmer.fromColors(
+                    baseColor: const Color(0xFF3A3A3A),
+                    highlightColor: const Color(0xFF4A4A4A),
+                    child: Container(
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  )
+                : Text(
+                    value ?? 'Address loading...',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
           ),
         ],
       ),
