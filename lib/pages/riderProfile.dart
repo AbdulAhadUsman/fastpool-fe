@@ -643,8 +643,8 @@ class _RiderProfileState extends State<RiderProfile> {
               ]),
             ),
           ),
-          bottomNavigationBar: RiderNavbar(
-            initialIndex: 3,
+          bottomNavigationBar: const RiderNavbar(
+            initialIndex: 4,
           ),
         ));
   }
