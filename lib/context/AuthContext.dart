@@ -22,11 +22,6 @@ class AuthContext {
   static const _genderKey = 'gender';
   static const _ratingsKey = 'ratings';
 
-
-  static const _baseUrlKey = 'http://192.168.172.254:8000';
-
-  static const _baseUrlKey = 'http://192.168.43.254:8000';
-
   static String get _baseUrl =>
       dotenv.env['BASE_URL'] ?? 'http://192.168.43.254:8000';
 
@@ -110,7 +105,7 @@ class AuthContext {
     if (role != null && token != null) {
       try {
         final response = await http.get(
-          Uri.parse('$_baseUrlKey/users/profile/?role=$role'),
+          Uri.parse('$_baseUrl/users/profile/?role=$role'),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -173,7 +168,7 @@ class AuthContext {
   static Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrlKey/users/login/'),
+        Uri.parse('$_baseUrl/users/login/'),
         body: {'email': email, 'password': password},
       );
 
@@ -200,9 +195,9 @@ class AuthContext {
     try {
       print('in the try block of register function');
       print(email);
-      print(_baseUrlKey);
+      print(_baseUrl);
       final response = await http.post(
-        Uri.parse('$_baseUrlKey/users/signup/'),
+        Uri.parse('$_baseUrl/users/signup/'),
         body: {
           'email': email,
           'password': password,
@@ -242,7 +237,7 @@ class AuthContext {
       print(otp);
 
       final response = await http.post(
-        Uri.parse('$_baseUrlKey/users/verify/'),
+        Uri.parse('$_baseUrl/users/verify/'),
         body: {
           'username': username,
           'email': email,
