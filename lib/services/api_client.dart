@@ -1,0 +1,90 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:fastpool_fe/constants/api.dart';
+import 'package:fastpool_fe/models/search_response.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+class ApiClient {
+  final String backendUrl;
+  final String accessToken;
+
+  ApiClient({
+    this.backendUrl =
+        'http://10.0.2.2:8000', // Default URL for Android emulator
+    this.accessToken = access_token,
+  });
+
+  Map<String, String> get _headers => {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      };
+
+  Future<Map<String, dynamic>> fetchRiderHomepage() async {
+    final response = await http.get(
+      Uri.parse('$backendUrl/riders/homepage'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to load homepage data: ${response.statusCode}');
+    }
+  }
+
+  Future<SearchResponse> searchRides({
+    LatLng? currentLocation,
+    String? cursor,
+    Map<String, dynamic>? filters,
+  }) async {
+    // Convert all values to strings for query parameters
+    final Map<String, String> queryParams = {
+      'role': 'rider',
+      if (currentLocation != null) ...{
+        'source_lat': currentLocation.latitude.toString(),
+        'source_lng': currentLocation.longitude.toString(),
+      },
+      if (cursor != null) 'cursor': cursor,
+      // Convert filter values to strings
+      if (filters != null)
+        ...filters.map((key, value) => MapEntry(key, value.toString())),
+    };
+
+    final uri = Uri.parse('$backendUrl/rides/search/').replace(
+      queryParameters: queryParams,
+    );
+
+    final response = await http.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return SearchResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to search rides: ${response.statusCode}');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchRiderRequests() async {
+    final response = await http.get(
+      Uri.parse('$backendUrl/rides/requests/?role=rider'),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data);
+    } else {
+      throw Exception('Failed to fetch requests: ${response.statusCode}');
+    }
+  }
+
+  Future<void> cancelRideRequest(int requestId) async {
+    final response = await http.delete(
+      Uri.parse('$backendUrl/rides/requests/$requestId/?role=rider'),
+      headers: _headers,
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to cancel request: ${response.statusCode}');
+    }
+  }
+}
