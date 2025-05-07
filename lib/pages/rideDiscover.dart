@@ -548,17 +548,6 @@ class _RideDiscoverState extends State<RideDiscover>
       return;
     }
 
-    if (!isPickup && !isFastNucesLocation(pickupAddress)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Pickup location must be FAST NUCES to change destination'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -570,18 +559,55 @@ class _RideDiscoverState extends State<RideDiscover>
     );
 
     if (result != null) {
+      final newLocation = result['location'] as LatLng;
+      final newAddress = result['address'] as String;
+      final isFastNuces = isFastNucesLocation(newAddress);
+
       setState(() {
         if (isPickup) {
-          pickupLocation = result['location'] as LatLng;
-          pickupAddress = result['address'] as String;
+          // If pickup is being set to FAST NUCES
+          if (isFastNuces) {
+            // If destination is also FAST NUCES, show error
+            if (isFastNucesLocation(destinationAddress)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Both locations cannot be FAST NUCES'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+          }
+          pickupLocation = newLocation;
+          pickupAddress = newAddress;
+        } else {
+          // If destination is being set to FAST NUCES
+          if (isFastNuces) {
+            // If pickup is also FAST NUCES, show error
+            if (isFastNucesLocation(pickupAddress)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Both locations cannot be FAST NUCES'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+          }
+          destinationLocation = newLocation;
+          destinationAddress = newAddress;
+        }
 
-          if (!isFastNucesLocation(pickupAddress)) {
+        // If neither location is FAST NUCES, set the other one to FAST NUCES
+        if (!isFastNucesLocation(pickupAddress) &&
+            !isFastNucesLocation(destinationAddress)) {
+          if (isPickup) {
             destinationLocation = fastNucesLocation;
             destinationAddress = fastNucesAddress;
+          } else {
+            pickupLocation = fastNucesLocation;
+            pickupAddress = fastNucesAddress;
           }
-        } else {
-          destinationLocation = result['location'] as LatLng;
-          destinationAddress = result['address'] as String;
         }
         // Update active filters to show the new location
         activeFilters = _getActiveFilterBubbles();
