@@ -24,6 +24,7 @@ class _RideFinalizationState extends State<RideFinalization> {
   int _amount = 100; // Change _amount to int
   String _paymentOption = 'Cash';
   String _description = '';
+  bool _isCreating = false;
   final TextEditingController _descriptionController = TextEditingController();
 
   @override
@@ -75,15 +76,27 @@ class _RideFinalizationState extends State<RideFinalization> {
   }
 
   Future<void> _confirmRide() async {
-    final baseUrl = dotenv.env['BASE_URL']; // Get base URL from env file
-    final selectedVehicle = ModalRoute.of(context)?.settings.arguments
-        as Map<String, dynamic>?; // Pass vehicle data from previous page
+    setState(() {
+      _isCreating = true;
+    });
+
+    final baseUrl = dotenv.env['BASE_URL'];
+    final selectedVehicle =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (selectedVehicle == null) {
-      print('No vehicle selected');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vehicle and route information is missing'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isCreating = false;
+      });
       return;
     }
 
-    final token = AuthContext.getToken(); // Retrieve token from AuthContext
+    final token = AuthContext.getToken();
 
     // Combine date and time to create DateTime objects
     final DateTime selectedDateTime = DateTime(
@@ -95,49 +108,63 @@ class _RideFinalizationState extends State<RideFinalization> {
     );
 
     final body = {
-      'source_lat': '0.0', // Replace with actual source latitude
-      'source_lng': '0.0', // Replace with actual source longitude
-      'destination_lat': '0.0', // Replace with actual destination latitude
-      'destination_lng': '0.0', // Replace with actual destination longitude
-      'vehicle': selectedVehicle['id'], // Vehicle ID from SelectVehicle page
-      'time': selectedDateTime
-          .toIso8601String()
-          .substring(11, 19), // Format as hh:mm:ss
-      'capacity':
-          selectedVehicle['capacity'], // Capacity of the selected vehicle
+      'source_lat': selectedVehicle['source_lat'].toString(),
+      'source_lng': selectedVehicle['source_lng'].toString(),
+      'destination_lat': selectedVehicle['destination_lat'].toString(),
+      'destination_lng': selectedVehicle['destination_lng'].toString(),
+      'vehicle': selectedVehicle['id'],
+      'time': selectedDateTime.toIso8601String().substring(11, 19),
+      'capacity': selectedVehicle['capacity'],
       'available_seats': _seats,
-      'amount': _isFree ? 0 : _amount, // Ensure amount is sent as an integer
-      'preferred_gender':
-          _preferredGender, // Convert to lowercase (e.g., "male", "female", "all")
+      'amount': _isFree ? 0 : _amount,
+      'preferred_gender': _preferredGender,
       'payment_option': _paymentOption,
-      'expiration_time': selectedDateTime
-          .toIso8601String()
-          .substring(11, 19), // Format as hh:mm:ss
-      'date': _selectedDate
-          .toIso8601String()
-          .substring(0, 10), // Format as YYYY-MM-DD
+      'expiration_time': selectedDateTime.toIso8601String().substring(11, 19),
+      'date': _selectedDate.toIso8601String().substring(0, 10),
       'description': _description,
     };
-    print(body);
 
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/rides/'),
         headers: {
           'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json', // Explicitly set Content-Type
+          'Content-Type': 'application/json',
         },
-        body: jsonEncode(body), // Ensure body is JSON-encoded
+        body: jsonEncode(body),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Ride confirmed successfully');
-        Navigator.pop(context); // Navigate back or to a success page
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ride created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        setState(() {
+          _isCreating = false;
+        });
       } else {
-        print('Failed to confirm ride: ${response.body}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create ride: ${response.body}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() {
+          _isCreating = false;
+        });
       }
     } catch (e) {
-      print('Error confirming ride: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error creating ride: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isCreating = false;
+      });
     }
   }
 
@@ -575,16 +602,25 @@ class _RideFinalizationState extends State<RideFinalization> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                onPressed: _confirmRide,
-                child: const Text(
-                  'Confirm Ride',
-                  style: TextStyle(
-                    fontFamily: "Poppins",
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // Set text color to white
-                  ),
-                ),
+                onPressed: _isCreating ? null : _confirmRide,
+                child: _isCreating
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Confirm Ride',
+                        style: TextStyle(
+                          fontFamily: "Poppins",
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
