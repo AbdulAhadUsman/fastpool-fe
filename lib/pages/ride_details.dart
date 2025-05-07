@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constants/api.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'location_picker.dart';
 
 class RideDetailsPage extends StatefulWidget {
   final Ride ride;
@@ -25,6 +26,14 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   Set<Marker> markers = {};
   Set<Polyline> polylines = {};
   bool isMapLoading = true;
+  Set<String> expandedRiders = {}; // Track expanded state of rider cards
+
+  // Request ride state
+  LatLng? requestPickupLocation;
+  String? requestPickupAddress;
+  TimeOfDay? requestPickupTime;
+  bool useRidePickupLocation = false;
+  bool useRideTime = false;
 
   @override
   void initState() {
@@ -278,14 +287,398 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return Container(
       width: 60,
       height: 60,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        image: DecorationImage(
-          image: NetworkImage(imageUrl),
-          fit: BoxFit.cover,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: AppColors.primaryBlue,
+            child: const Center(
+              child: Icon(
+                Icons.person,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: AppColors.primaryGray,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                color: AppColors.primaryBlue,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRiderCard(Map<String, dynamic> rider) {
+    final isExpanded = expandedRiders.contains(rider['username']);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF282828),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryGray,
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              if (isExpanded) {
+                expandedRiders.remove(rider['username']);
+              } else {
+                expandedRiders.add(rider['username']);
+              }
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      _buildProfileImage(rider['profile_pic'] ?? ''),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              rider['username'] ?? 'Unknown User',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'Poppins',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              rider['gender'] ?? 'Not specified',
+                              style: const TextStyle(
+                                color: Color(0xFFA4A4A4),
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.primaryBlue,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  ),
+                  child: AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    child: Container(
+                      height: isExpanded ? null : 0,
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 1,
+                            color: AppColors.primaryGray,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                _buildInfoRow(
+                                    'Email', rider['email'] ?? 'Not available'),
+                                _buildInfoRow(
+                                    'Phone', rider['phone'] ?? 'Not available'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  void _handleLocationSelection() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationPickerPage(
+          title: 'Select Pickup Location',
+          initialLocation: requestPickupLocation ??
+              LatLng(widget.ride.sourceLat, widget.ride.sourceLng),
+        ),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        requestPickupLocation = result['location'] as LatLng;
+        requestPickupAddress = result['address'] as String;
+        useRidePickupLocation = false;
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final now = TimeOfDay.now();
+    final rideParts = widget.ride.time.split(':');
+    final rideTime = TimeOfDay(
+      hour: int.parse(rideParts[0]),
+      minute: int.parse(rideParts[1]),
+    );
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: requestPickupTime ?? rideTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.primaryBlue,
+              onPrimary: Colors.white,
+              surface: AppColors.backgroundColor,
+              onSurface: Colors.white,
+            ),
+            dialogBackgroundColor: AppColors.primaryGray,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        requestPickupTime = picked;
+        useRideTime = false;
+      });
+    }
+  }
+
+  Widget _buildRequestSection() {
+    final rideParts = widget.ride.time.split(':');
+    final rideTime = TimeOfDay(
+      hour: int.parse(rideParts[0]),
+      minute: int.parse(rideParts[1]),
+    );
+
+    return _buildSection(
+      'Request Details',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Pickup Location
+          const Text(
+            'Pickup Location',
+            style: TextStyle(
+              color: Color(0xFFA4A4A4),
+              fontFamily: 'Poppins',
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF282828),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primaryBlue),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _handleLocationSelection,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          useRidePickupLocation
+                              ? sourceAddress ?? 'Loading...'
+                              : requestPickupAddress ??
+                                  'Select pickup location',
+                          style: TextStyle(
+                            color: (useRidePickupLocation &&
+                                        sourceAddress != null) ||
+                                    requestPickupAddress != null
+                                ? Colors.white
+                                : const Color(0xFFA4A4A4),
+                            fontFamily: 'Poppins',
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    useRidePickupLocation = !useRidePickupLocation;
+                    if (useRidePickupLocation) {
+                      requestPickupLocation =
+                          LatLng(widget.ride.sourceLat, widget.ride.sourceLng);
+                      requestPickupAddress = sourceAddress;
+                    }
+                  });
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: useRidePickupLocation
+                      ? AppColors.primaryBlue
+                      : const Color(0xFF282828),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Use Ride\'s',
+                  style: TextStyle(
+                    color: useRidePickupLocation
+                        ? Colors.white
+                        : const Color(0xFFA4A4A4),
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Pickup Time
+          const Text(
+            'Pickup Time',
+            style: TextStyle(
+              color: Color(0xFFA4A4A4),
+              fontFamily: 'Poppins',
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF282828),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primaryBlue),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _selectTime(context),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          useRideTime
+                              ? _formatTime(widget.ride.time)
+                              : requestPickupTime != null
+                                  ? _formatTimeOfDay(requestPickupTime!)
+                                  : 'Select pickup time',
+                          style: TextStyle(
+                            color: useRideTime || requestPickupTime != null
+                                ? Colors.white
+                                : const Color(0xFFA4A4A4),
+                            fontFamily: 'Poppins',
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    useRideTime = !useRideTime;
+                    if (useRideTime) {
+                      requestPickupTime = rideTime;
+                    }
+                  });
+                },
+                style: TextButton.styleFrom(
+                  backgroundColor: useRideTime
+                      ? AppColors.primaryBlue
+                      : const Color(0xFF282828),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Use Ride\'s',
+                  style: TextStyle(
+                    color: useRideTime ? Colors.white : const Color(0xFFA4A4A4),
+                    fontFamily: 'Poppins',
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hour == 0
+        ? 12
+        : time.hour > 12
+            ? time.hour - 12
+            : time.hour;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
   }
 
   @override
@@ -367,21 +760,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               ),
             ),
 
-            // Vehicle Section
-            _buildSection(
-              'Vehicle Information',
-              Column(
-                children: [
-                  _buildInfoRow('Name', widget.ride.vehicle.name),
-                  _buildInfoRow(
-                      'Registration', widget.ride.vehicle.registrationNumber),
-                  _buildInfoRow('Type', widget.ride.vehicle.type),
-                  _buildInfoRow('AC', widget.ride.vehicle.hasAC ? 'Yes' : 'No'),
-                  _buildInfoRow('Capacity', '${widget.ride.vehicle.capacity}'),
-                ],
-              ),
-            ),
-
             // Route Map Section
             _buildSection(
               'Route',
@@ -415,7 +793,6 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                             polylines: polylines,
                             onMapCreated: (GoogleMapController controller) {
                               mapController = controller;
-                              // Set map style to dark mode
                               controller.setMapStyle('''
                                 [
                                   {
@@ -511,23 +888,58 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               ),
             ),
 
-            // Book Ride Button
+            // Vehicle Section
+            _buildSection(
+              'Vehicle Information',
+              Column(
+                children: [
+                  _buildInfoRow('Name', widget.ride.vehicle.name),
+                  _buildInfoRow(
+                      'Registration', widget.ride.vehicle.registrationNumber),
+                  _buildInfoRow('Type', widget.ride.vehicle.type),
+                  _buildInfoRow('AC', widget.ride.vehicle.hasAC ? 'Yes' : 'No'),
+                  _buildInfoRow('Capacity', '${widget.ride.vehicle.capacity}'),
+                ],
+              ),
+            ),
+
+            // Riders Section
+            if (widget.ride.riders.isNotEmpty)
+              _buildSection(
+                'Current Riders',
+                Column(
+                  children: widget.ride.riders
+                      .map((rider) => _buildRiderCard(rider))
+                      .toList(),
+                ),
+              ),
+
+            // Request Section
+            _buildRequestSection(),
+
+            // Request Ride Button
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement booking functionality
-                },
+                onPressed:
+                    (useRidePickupLocation || requestPickupLocation != null) &&
+                            (useRideTime || requestPickupTime != null)
+                        ? () {
+                            // TODO: Implement request functionality
+                          }
+                        : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
+                  disabledBackgroundColor:
+                      AppColors.primaryBlue.withOpacity(0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 child: const Text(
-                  'Book Ride',
+                  'Request Ride',
                   style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'Poppins',
