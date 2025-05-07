@@ -10,6 +10,9 @@ class RouteMapView extends StatefulWidget {
   final LatLng destinationLocation;
   final String pickupAddress;
   final String destinationAddress;
+  // New optional parameter for request's pickup location
+  final LatLng? requestPickupLocation;
+  final String? requestPickupAddress;
 
   const RouteMapView({
     super.key,
@@ -17,6 +20,8 @@ class RouteMapView extends StatefulWidget {
     required this.destinationLocation,
     required this.pickupAddress,
     required this.destinationAddress,
+    this.requestPickupLocation,
+    this.requestPickupAddress,
   });
 
   @override
@@ -55,6 +60,21 @@ class _RouteMapViewState extends State<RouteMapView> {
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
       ),
     );
+
+    // Add request pickup marker if provided
+    if (widget.requestPickupLocation != null) {
+      markers.add(
+        Marker(
+          markerId: const MarkerId('request_pickup'),
+          position: widget.requestPickupLocation!,
+          infoWindow: InfoWindow(
+            title: 'Request Pickup',
+            snippet: widget.requestPickupAddress ?? 'Your pickup location',
+          ),
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+        ),
+      );
+    }
 
     // Get route between points
     await _getRoute();
@@ -197,29 +217,29 @@ class _RouteMapViewState extends State<RouteMapView> {
                 }
               ]''');
 
-              // Fit map bounds to include both markers
+              // Calculate bounds to include all markers
+              double minLat = widget.pickupLocation.latitude;
+              double maxLat = widget.pickupLocation.latitude;
+              double minLng = widget.pickupLocation.longitude;
+              double maxLng = widget.pickupLocation.longitude;
+
+              void updateBounds(LatLng point) {
+                minLat = minLat < point.latitude ? minLat : point.latitude;
+                maxLat = maxLat > point.latitude ? maxLat : point.latitude;
+                minLng = minLng < point.longitude ? minLng : point.longitude;
+                maxLng = maxLng > point.longitude ? maxLng : point.longitude;
+              }
+
+              updateBounds(widget.destinationLocation);
+              if (widget.requestPickupLocation != null) {
+                updateBounds(widget.requestPickupLocation!);
+              }
+
               final bounds = LatLngBounds(
-                southwest: LatLng(
-                  widget.pickupLocation.latitude <
-                          widget.destinationLocation.latitude
-                      ? widget.pickupLocation.latitude
-                      : widget.destinationLocation.latitude,
-                  widget.pickupLocation.longitude <
-                          widget.destinationLocation.longitude
-                      ? widget.pickupLocation.longitude
-                      : widget.destinationLocation.longitude,
-                ),
-                northeast: LatLng(
-                  widget.pickupLocation.latitude >
-                          widget.destinationLocation.latitude
-                      ? widget.pickupLocation.latitude
-                      : widget.destinationLocation.latitude,
-                  widget.pickupLocation.longitude >
-                          widget.destinationLocation.longitude
-                      ? widget.pickupLocation.longitude
-                      : widget.destinationLocation.longitude,
-                ),
+                southwest: LatLng(minLat, minLng),
+                northeast: LatLng(maxLat, maxLng),
               );
+
               controller
                   .animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
             },

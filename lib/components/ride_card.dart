@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/ride.dart';
 import '../components/colors.dart';
 import '../pages/ride_details.dart';
+import '../components/vehicle_icon.dart';
+import '../helper-functions/address_formatter.dart';
 
 class RideCard extends StatefulWidget {
   final Ride ride;
@@ -78,7 +80,6 @@ class _RideCardState extends State<RideCard>
   }
 
   String _formatTime(String time) {
-    // Parse the 24-hour time string
     final timeParts = time.split(':');
     if (timeParts.length < 2) return time;
 
@@ -123,115 +124,73 @@ class _RideCardState extends State<RideCard>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // Left section with vehicle icon and price
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      VehicleIcon(vehicleType: widget.ride.vehicle.type),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Rs ${widget.ride.amount}',
+                        style: const TextStyle(
+                          color: AppColors.primaryBlue,
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Vertical divider
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    width: 1,
+                    height: 60,
+                    color: const Color(0xFF404040),
+                  ),
+                  // Right section with addresses
                   Expanded(
-                    child: Row(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Pickup row
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.my_location,
-                                    color: Color(0xFFA4A4A4),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      widget.ride.pickup,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: _isExpanded ? null : 1,
-                                      overflow: _isExpanded
-                                          ? null
-                                          : TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 15),
-                              // Destination row
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.location_on,
-                                    color: Color(0xFFA4A4A4),
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      widget.ride.destination,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontFamily: 'Poppins',
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: _isExpanded ? null : 1,
-                                      overflow: _isExpanded
-                                          ? null
-                                          : TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Right section with amount and time
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Amount
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Text(
-                            'Rs ${widget.ride.amount}',
-                            style: const TextStyle(
-                              color: AppColors.primaryBlue,
-                              fontFamily: 'Poppins',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // Time
                         Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
-                              Icons.access_time,
-                              color: AppColors.primaryBlue,
-                              size: 16,
+                              Icons.my_location,
+                              color: Color(0xFFA4A4A4),
+                              size: 20,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _formatTime(widget.ride.time),
-                              style: const TextStyle(
-                                color: AppColors.primaryBlue,
-                                fontFamily: 'Poppins',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                formatAddress(widget.ride.pickup),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              color: Color(0xFFA4A4A4),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                formatAddress(widget.ride.destination),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: 'Poppins',
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -239,34 +198,19 @@ class _RideCardState extends State<RideCard>
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            // Centered drop arrow with circular background
-            Container(
-              alignment: Alignment.center,
-              transform: Matrix4.translationValues(0, -12, 0),
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFF282828),
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: RotationTransition(
-                    turns: _iconTurns,
-                    child: const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Color(0xFFA4A4A4),
-                      size: 20,
+                  // Dropdown arrow
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: RotationTransition(
+                      turns: _iconTurns,
+                      child: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.primaryBlue,
+                        size: 24,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
             // Expanded Details Section
@@ -289,6 +233,16 @@ class _RideCardState extends State<RideCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildDetailRow(
+                          Icons.access_time,
+                          'Time',
+                          _formatTime(widget.ride.time),
+                        ),
+                        _buildDetailRow(
+                          Icons.calendar_today,
+                          'Date',
+                          widget.ride.date,
+                        ),
+                        _buildDetailRow(
                           Icons.person,
                           'Driver',
                           '${widget.ride.driver.username} (${widget.ride.driver.driverRating}★)',
@@ -302,11 +256,6 @@ class _RideCardState extends State<RideCard>
                           Icons.event_seat,
                           'Capacity',
                           '${widget.ride.capacity} seats (${widget.ride.availableSeats} available)',
-                        ),
-                        _buildDetailRow(
-                          Icons.calendar_today,
-                          'Date',
-                          widget.ride.date,
                         ),
                         _buildDetailRow(
                           Icons.person_outline,

@@ -2,9 +2,11 @@ import 'package:fastpool_fe/components/RiderNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/constants/api.dart';
 import 'package:fastpool_fe/helper-functions/reverseGeoLoc.dart';
+import 'package:fastpool_fe/services/api_client.dart';
+import 'package:fastpool_fe/components/shimmer_widgets.dart';
+import 'package:fastpool_fe/pages/route_map_view.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 // import 'package:lucide_icons/lucide_icons.dart'; // Optional if you want matching icons
 
 class RiderHomePage extends StatefulWidget {
@@ -18,13 +20,13 @@ class _RiderHomePageState extends State<RiderHomePage>
     with AutomaticKeepAliveClientMixin {
   final String profilePicUrl = 'assets/images/Login.png';
   final String driverName = 'Shariq Munir';
-  final String backendUrl = 'http://10.0.2.2:8000'; // <-- changeable URL
-  final String accessToken = access_token;
+  final ApiClient _apiClient = ApiClient();
 
   int? pendingRequestsCount;
   Map<String, dynamic>? upcomingRide;
   double? rating;
   bool isLoading = true;
+  bool isLoadingAddresses = false;
   String? errorMessage;
 
   // Cache for homepage data
@@ -48,6 +50,33 @@ class _RiderHomePageState extends State<RiderHomePage>
   @override
   bool get wantKeepAlive => true; // This makes sure the page state is preserved
 
+  Future<void> fetchAddresses(Map<String, dynamic> ride) async {
+    setState(() {
+      isLoadingAddresses = true;
+    });
+
+    try {
+      final sourceAddress = await getAddressFromLatLng(
+        ride['source_lat'],
+        ride['source_lng'],
+      );
+      final destinationAddress = await getAddressFromLatLng(
+        ride['destination_lat'],
+        ride['destination_lng'],
+      );
+
+      setState(() {
+        ride['source_address'] = sourceAddress;
+        ride['destination_address'] = destinationAddress;
+        isLoadingAddresses = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoadingAddresses = false;
+      });
+    }
+  }
+
   Future<void> fetchHomepageData() async {
     setState(() {
       isLoading = true;
@@ -55,49 +84,20 @@ class _RiderHomePageState extends State<RiderHomePage>
     });
 
     try {
-      final response = await http.get(
-        Uri.parse('$backendUrl/riders/homepage'),
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-          'Content-Type': 'application/json',
-        },
-      );
+      final data = await _apiClient.fetchRiderHomepage();
+      final ride = data['Results']['upcoming_ride'];
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final ride = data['Results']['upcoming_ride'];
+      setState(() {
+        pendingRequestsCount = data['Results']['pending_requests_count'];
+        rating = (data['Results']['rating'] as num).toDouble();
+        upcomingRide = ride;
+        isLoading = false;
+        cachedData = data;
+      });
 
-        String? sourceAddress;
-        String? destinationAddress;
-
-        if (ride != null) {
-          sourceAddress = await getAddressFromLatLng(
-            ride['source_lat'],
-            ride['source_lng'],
-          );
-          destinationAddress = await getAddressFromLatLng(
-            ride['destination_lat'],
-            ride['destination_lng'],
-          );
-
-          ride['source_address'] = sourceAddress;
-          ride['destination_address'] = destinationAddress;
-        }
-
-        setState(() {
-          pendingRequestsCount = data['Results']['pending_requests_count'];
-          rating = (data['Results']['rating'] as num).toDouble();
-          upcomingRide = ride;
-          isLoading = false;
-
-          // Cache the data after fetching
-          cachedData = data;
-        });
-      } else {
-        setState(() {
-          errorMessage = 'Error: ${response.statusCode}';
-          isLoading = false;
-        });
+      // Fetch addresses after setting the initial data
+      if (ride != null) {
+        fetchAddresses(ride);
       }
     } catch (e) {
       setState(() {
@@ -114,13 +114,11 @@ class _RiderHomePageState extends State<RiderHomePage>
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       body: SafeArea(
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : errorMessage != null
-                ? Center(
-                    child: Text(errorMessage!,
-                        style: const TextStyle(color: Colors.red)))
-                : buildContent(),
+        child: errorMessage != null
+            ? Center(
+                child: Text(errorMessage!,
+                    style: const TextStyle(color: Colors.red)))
+            : buildContent(),
       ),
       bottomNavigationBar: RiderNavbar(initialIndex: 0),
     );
@@ -138,33 +136,36 @@ class _RiderHomePageState extends State<RiderHomePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Card(
-                color: const Color(0xFF1E1E1E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundImage: AssetImage(profilePicUrl),
+              // Welcome Card
+              isLoading
+                  ? const WelcomeCardShimmer()
+                  : Card(
+                      color: const Color(0xFF1E1E1E),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Welcome $driverName',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundImage: AssetImage(profilePicUrl),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Welcome $driverName',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
+                    ),
               const SizedBox(height: 20),
               const Text(
                 'Stats',
@@ -179,38 +180,111 @@ class _RiderHomePageState extends State<RiderHomePage>
               Row(
                 children: [
                   Expanded(
-                    child: StatCard(
-                      icon: Icons.directions_car,
-                      title: 'Pending Requests',
-                      value: pendingRequestsCount?.toString() ?? '-',
-                    ),
+                    child: isLoading
+                        ? const StatCardShimmer()
+                        : StatCard(
+                            icon: Icons.directions_car,
+                            title: 'Pending Requests',
+                            value: pendingRequestsCount?.toString() ?? '-',
+                          ),
                   ),
                   const SizedBox(width: 5),
                   Expanded(
-                    child: StatCard(
-                      icon: Icons.star,
-                      title: 'My Rating',
-                      value: rating?.toStringAsFixed(1) ?? '-',
-                    ),
+                    child: isLoading
+                        ? const StatCardShimmer()
+                        : StatCard(
+                            icon: Icons.star,
+                            title: 'My Rating',
+                            value: rating?.toStringAsFixed(1) ?? '-',
+                          ),
                   ),
                 ],
               ),
               const SizedBox(height: 15),
-              const Text(
-                'Upcoming Ride',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Poppins',
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Upcoming Ride',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Poppins',
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (!isLoading && upcomingRide != null && !isLoadingAddresses)
+                    TextButton(
+                      onPressed: () {
+                        final ride = upcomingRide!;
+                        if (ride['source_lat'] == null ||
+                            ride['source_lng'] == null ||
+                            ride['destination_lat'] == null ||
+                            ride['destination_lng'] == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Please wait for the locations to load completely.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RouteMapView(
+                              pickupLocation: LatLng(
+                                ride['source_lat'],
+                                ride['source_lng'],
+                              ),
+                              destinationLocation: LatLng(
+                                ride['destination_lat'],
+                                ride['destination_lng'],
+                              ),
+                              pickupAddress:
+                                  ride['source_address'] ?? 'Unknown',
+                              destinationAddress:
+                                  ride['destination_address'] ?? 'Unknown',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'View in Map',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 5),
-              if (upcomingRide != null) ...[
+              if (isLoading)
+                const UpcomingRideShimmer()
+              else if (upcomingRide != null)
                 UpcomingRideCard(
-                  source: upcomingRide!['source_address'] ?? 'Unknown',
-                  destination:
-                      upcomingRide!['destination_address'] ?? 'Unknown',
+                  source: isLoadingAddresses
+                      ? 'Loading address...'
+                      : upcomingRide!['source_address'] ?? 'Unknown',
+                  destination: isLoadingAddresses
+                      ? 'Loading address...'
+                      : upcomingRide!['destination_address'] ?? 'Unknown',
                   time: upcomingRide!['time'],
                   date: upcomingRide!['date'],
                   preferredGender: upcomingRide!['preferred_gender'],
@@ -220,8 +294,9 @@ class _RiderHomePageState extends State<RiderHomePage>
                   registrationNumber: upcomingRide!['vehicle_reg#'],
                   availableSeats: upcomingRide!['available_seats'],
                   acStatus: upcomingRide!['ac'] ? 'Yes' : 'No',
-                ),
-              ] else ...[
+                  isLoadingAddresses: isLoadingAddresses,
+                )
+              else
                 const Text(
                   'You have no upcoming ride.',
                   style: TextStyle(
@@ -231,7 +306,6 @@ class _RiderHomePageState extends State<RiderHomePage>
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
             ],
           ),
         ),
@@ -295,20 +369,23 @@ class UpcomingRideCard extends StatelessWidget {
   final int availableSeats;
   final String date;
   final String acStatus;
+  final bool isLoadingAddresses;
 
-  const UpcomingRideCard(
-      {super.key,
-      required this.source,
-      required this.destination,
-      required this.time,
-      required this.preferredGender,
-      required this.amount,
-      required this.paymentOption,
-      required this.vehicleType,
-      required this.registrationNumber,
-      required this.availableSeats,
-      required this.acStatus,
-      required this.date});
+  const UpcomingRideCard({
+    super.key,
+    required this.source,
+    required this.destination,
+    required this.time,
+    required this.preferredGender,
+    required this.amount,
+    required this.paymentOption,
+    required this.vehicleType,
+    required this.registrationNumber,
+    required this.availableSeats,
+    required this.acStatus,
+    required this.date,
+    this.isLoadingAddresses = false,
+  });
 
   @override
   Widget build(BuildContext context) {

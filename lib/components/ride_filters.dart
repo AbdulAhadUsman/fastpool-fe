@@ -36,27 +36,36 @@ class ActiveFilters extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: AppColors.primaryBlue),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${filter.type}: ${filter.value}',
-                  style: TextStyle(
-                    color: AppColors.primaryBlue,
-                    fontFamily: 'Poppins',
-                    fontSize: 12,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.8 -
+                    44, // Account for padding and spacing
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      '${filter.type}: ${filter.value}',
+                      style: const TextStyle(
+                        color: AppColors.primaryBlue,
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 4),
-                GestureDetector(
-                  onTap: () => onRemove(filter.type),
-                  child: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: AppColors.primaryBlue,
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => onRemove(filter.type),
+                    child: Icon(
+                      Icons.close,
+                      size: 16,
+                      color: AppColors.primaryBlue,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -84,49 +93,239 @@ class RideFilters extends StatefulWidget {
 class _RideFiltersState extends State<RideFilters> {
   // Filter state variables
   late String selectedType;
-  late String capacityOption;
-  late int? customCapacity;
-  late String? acPreference;
-  late bool isAmountFilterEnabled;
-  late double? minAmount;
-  late double? maxAmount;
+  late String capacityValue;
+  late String genderPreference;
   late String amountFilterType;
-  late String costType;
+  double? minAmount;
+  double? maxAmount;
   late String paymentOption;
-  late DateTime? selectedDate;
-  late TimeOfDay? selectedTime;
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
+  late String sortOption;
 
   final TextEditingController _capacityController = TextEditingController();
   final TextEditingController _minAmountController = TextEditingController();
   final TextEditingController _maxAmountController = TextEditingController();
 
+  // Sorting options
+  final Map<String, String> sortOptions = {
+    'Newest First': '-date',
+    'Oldest First': 'date',
+    'Time: Early to Late': 'time',
+    'Time: Late to Early': '-time',
+    'Price: Low to High': 'amount',
+    'Price: High to Low': '-amount',
+  };
+
+  // Add activeFilters state variable
+  List<ActiveFilter> activeFilters = [];
+
   @override
   void initState() {
     super.initState();
-    // Initialize with provided values or defaults
-    selectedType = widget.initialFilters?['type'] ?? 'Any';
-    capacityOption = widget.initialFilters?['capacityOption'] ?? 'Any';
-    customCapacity = widget.initialFilters?['customCapacity'];
-    acPreference = widget.initialFilters?['acPreference'] ?? 'Any';
-    isAmountFilterEnabled =
-        widget.initialFilters?['isAmountFilterEnabled'] ?? false;
-    minAmount = widget.initialFilters?['minAmount'];
-    maxAmount = widget.initialFilters?['maxAmount'];
-    amountFilterType = widget.initialFilters?['amountFilterType'] ?? 'Any';
-    costType = widget.initialFilters?['costType'] ?? 'Any';
-    paymentOption = widget.initialFilters?['paymentOption'] ?? 'Any';
-    selectedDate = widget.initialFilters?['date'];
-    selectedTime = widget.initialFilters?['time'];
+    _initializeState();
+  }
 
-    if (customCapacity != null) {
-      _capacityController.text = customCapacity.toString();
+  void _initializeState() {
+    // Initialize with provided values or defaults
+    selectedType = widget.initialFilters?['vehicle_type'] ?? 'Any';
+    capacityValue = widget.initialFilters?['min_seats']?.toString() ?? '';
+    genderPreference = widget.initialFilters?['preferred_gender'] ?? 'Any';
+    paymentOption = widget.initialFilters?['payment_option'] ?? 'Any';
+    sortOption = widget.initialFilters?['ordering'] ?? '-date';
+
+    // Initialize amount filter type and values
+    minAmount = widget.initialFilters?['min_amount'];
+    maxAmount = widget.initialFilters?['max_amount'];
+    if (minAmount != null || maxAmount != null) {
+      if (minAmount != null && maxAmount != null) {
+        amountFilterType = 'Range';
+        _minAmountController.text = minAmount!.toString();
+        _maxAmountController.text = maxAmount!.toString();
+      } else if (minAmount != null) {
+        amountFilterType = 'At Least';
+        _minAmountController.text = minAmount!.toString();
+      } else if (maxAmount != null) {
+        amountFilterType = 'At Most';
+        _maxAmountController.text = maxAmount!.toString();
+      }
+    } else {
+      amountFilterType = 'Any';
     }
-    if (minAmount != null) {
-      _minAmountController.text = minAmount.toString();
+
+    // Initialize capacity controller if value exists
+    if (capacityValue.isNotEmpty) {
+      _capacityController.text = capacityValue;
     }
-    if (maxAmount != null) {
-      _maxAmountController.text = maxAmount.toString();
+
+    // Handle date and time
+    if (widget.initialFilters?['date_after'] != null) {
+      try {
+        selectedDate = DateTime.parse(widget.initialFilters!['date_after']);
+      } catch (e) {
+        selectedDate = null;
+      }
     }
+
+    if (widget.initialFilters?['time_after'] != null) {
+      try {
+        final timeStr = widget.initialFilters!['time_after'];
+        final parts = timeStr.split(':');
+        if (parts.length >= 2) {
+          selectedTime = TimeOfDay(
+            hour: int.parse(parts[0]),
+            minute: int.parse(parts[1]),
+          );
+        }
+      } catch (e) {
+        selectedTime = null;
+      }
+    }
+
+    // Initialize active filters
+    _updateActiveFilters();
+  }
+
+  void _updateActiveFilters() {
+    setState(() {
+      activeFilters = _getActiveFilterBubbles();
+    });
+  }
+
+  List<ActiveFilter> _getActiveFilterBubbles() {
+    final List<ActiveFilter> filters = [];
+
+    // Vehicle Type filter
+    if (selectedType != 'Any') {
+      filters.add(ActiveFilter(
+        type: 'Vehicle',
+        value: selectedType,
+      ));
+    }
+
+    // Minimum Seats filter
+    if (capacityValue.isNotEmpty) {
+      filters.add(ActiveFilter(
+        type: 'Seats',
+        value: '≥ $capacityValue',
+      ));
+    }
+
+    // Gender Preference filter
+    if (genderPreference != 'Any') {
+      filters.add(ActiveFilter(
+        type: 'Gender',
+        value: genderPreference,
+      ));
+    }
+
+    // Amount Range filters
+    if (amountFilterType != 'Any') {
+      String value = '';
+      if (minAmount != null && maxAmount != null) {
+        value =
+            'Rs. ${minAmount!.toStringAsFixed(0)} - ${maxAmount!.toStringAsFixed(0)}';
+      } else if (minAmount != null) {
+        value = '≥ Rs. ${minAmount!.toStringAsFixed(0)}';
+      } else if (maxAmount != null) {
+        value = '≤ Rs. ${maxAmount!.toStringAsFixed(0)}';
+      }
+      if (value.isNotEmpty) {
+        filters.add(ActiveFilter(type: 'Amount', value: value));
+      }
+    }
+
+    // Payment Option filter
+    if (paymentOption != 'Any') {
+      filters.add(ActiveFilter(
+        type: 'Payment',
+        value: paymentOption,
+      ));
+    }
+
+    // Date filter
+    if (selectedDate != null) {
+      filters.add(ActiveFilter(
+        type: 'Date',
+        value:
+            '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
+      ));
+    }
+
+    // Time filter
+    if (selectedTime != null) {
+      filters.add(ActiveFilter(
+        type: 'Time',
+        value: selectedTime!.format(context),
+      ));
+    }
+
+    // Sort filter
+    if (sortOption != '-date') {
+      String sortValue = '';
+      switch (sortOption) {
+        case '-date':
+          sortValue = 'Newest First';
+          break;
+        case 'date':
+          sortValue = 'Oldest First';
+          break;
+        case 'time':
+          sortValue = 'Early to Late';
+          break;
+        case '-time':
+          sortValue = 'Late to Early';
+          break;
+        case 'amount':
+          sortValue = 'Price: Low to High';
+          break;
+        case '-amount':
+          sortValue = 'Price: High to Low';
+          break;
+      }
+      if (sortValue.isNotEmpty) {
+        filters.add(ActiveFilter(type: 'Sort', value: sortValue));
+      }
+    }
+
+    return filters;
+  }
+
+  void _removeFilter(String type) {
+    setState(() {
+      switch (type) {
+        case 'Vehicle':
+          selectedType = 'Any';
+          break;
+        case 'Seats':
+          capacityValue = '';
+          _capacityController.clear();
+          break;
+        case 'Gender':
+          genderPreference = 'Any';
+          break;
+        case 'Amount':
+          amountFilterType = 'Any';
+          minAmount = null;
+          maxAmount = null;
+          _minAmountController.clear();
+          _maxAmountController.clear();
+          break;
+        case 'Payment':
+          paymentOption = 'Any';
+          break;
+        case 'Date':
+          selectedDate = null;
+          break;
+        case 'Time':
+          selectedTime = null;
+          break;
+        case 'Sort':
+          sortOption = '-date';
+          break;
+      }
+      _updateActiveFilters();
+    });
   }
 
   @override
@@ -179,6 +378,7 @@ class _RideFiltersState extends State<RideFilters> {
         }
       });
     }
+    _updateActiveFilters();
   }
 
   Future<void> _selectTime(BuildContext context) async {
@@ -225,6 +425,7 @@ class _RideFiltersState extends State<RideFilters> {
         selectedTime = picked;
       });
     }
+    _updateActiveFilters();
   }
 
   // Add this method to validate numeric input
@@ -333,114 +534,16 @@ class _RideFiltersState extends State<RideFilters> {
     );
   }
 
-  Widget _buildTypeOption(String type) {
-    final isSelected = selectedType == type;
+  Widget _buildTypeOption(String option) {
+    final isSelected = selectedType == option;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => selectedType = type),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryBlue : AppColors.primaryGray,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              type,
-              style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFFA4A4A4),
-                fontFamily: 'Poppins',
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapacitySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Capacity',
-          style: TextStyle(
-            color: Color(0xFFA4A4A4),
-            fontFamily: 'Poppins',
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _buildCapacityOption('Any'),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryGray,
-                  borderRadius: BorderRadius.circular(8),
-                  border: capacityOption == 'Custom'
-                      ? Border.all(color: AppColors.primaryBlue, width: 1)
-                      : null,
-                ),
-                child: Center(
-                  child: TextField(
-                    controller: _capacityController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontFamily: 'Poppins',
-                      fontSize: 14,
-                    ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                      border: InputBorder.none,
-                      hintText: 'Enter number',
-                      hintStyle: TextStyle(
-                        color: Color(0xFFA4A4A4),
-                        fontFamily: 'Poppins',
-                        fontSize: 14,
-                      ),
-                    ),
-                    onTap: () {
-                      setState(() => capacityOption = 'Custom');
-                    },
-                    onChanged: (value) {
-                      setState(() {
-                        capacityOption = 'Custom';
-                        if (value.isNotEmpty) {
-                          final number = int.tryParse(value);
-                          if (number != null && number > 0) {
-                            customCapacity = number;
-                          }
-                        } else {
-                          customCapacity = null;
-                        }
-                      });
-                    },
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildACOption(String option) {
-    final isSelected = acPreference == option;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() {
-          acPreference = option;
-        }),
+        onTap: () {
+          setState(() {
+            selectedType = option;
+            _updateActiveFilters();
+          });
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
@@ -459,6 +562,168 @@ class _RideFiltersState extends State<RideFilters> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCapacitySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Minimum Seats',
+          style: TextStyle(
+            color: Color(0xFFA4A4A4),
+            fontFamily: 'Poppins',
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.primaryGray,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.primaryBlue, width: 1),
+          ),
+          child: Center(
+            child: TextField(
+              controller: _capacityController,
+              keyboardType: TextInputType.number,
+              style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Poppins',
+                fontSize: 14,
+              ),
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                border: InputBorder.none,
+                hintText: 'Enter minimum seats required',
+                hintStyle: TextStyle(
+                  color: Color(0xFFA4A4A4),
+                  fontFamily: 'Poppins',
+                  fontSize: 14,
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  capacityValue = value;
+                });
+              },
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderPreferenceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Gender Preference',
+          style: TextStyle(
+            color: Color(0xFFA4A4A4),
+            fontFamily: 'Poppins',
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _buildGenderOption('Any'),
+            const SizedBox(width: 12),
+            _buildGenderOption('Male'),
+            const SizedBox(width: 12),
+            _buildGenderOption('Female'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenderOption(String option) {
+    final isSelected = genderPreference == option;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            genderPreference = option;
+            _updateActiveFilters();
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryBlue : AppColors.primaryGray,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              option,
+              style: TextStyle(
+                color: isSelected ? Colors.white : const Color(0xFFA4A4A4),
+                fontFamily: 'Poppins',
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSortingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Sort By',
+          style: TextStyle(
+            color: Color(0xFFA4A4A4),
+            fontFamily: 'Poppins',
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.primaryGray,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.primaryBlue, width: 1),
+          ),
+          child: DropdownButton<String>(
+            value: sortOptions.entries
+                .firstWhere((e) => e.value == sortOption)
+                .key,
+            isExpanded: true,
+            dropdownColor: AppColors.primaryGray,
+            style: const TextStyle(
+              color: Colors.white,
+              fontFamily: 'Poppins',
+              fontSize: 14,
+            ),
+            underline: const SizedBox(),
+            items: sortOptions.keys.map((String key) {
+              return DropdownMenuItem<String>(
+                value: key,
+                child: Text(key),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  sortOption = sortOptions[newValue]!;
+                });
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -737,98 +1002,17 @@ class _RideFiltersState extends State<RideFilters> {
     );
   }
 
-  Widget _buildCostTypeSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Cost Type',
-          style: TextStyle(
-            color: Color(0xFFA4A4A4),
-            fontFamily: 'Poppins',
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            _buildCostTypeOption('Any'),
-            const SizedBox(width: 12),
-            _buildCostTypeOption('Free'),
-            const SizedBox(width: 12),
-            _buildCostTypeOption('Paid'),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCostTypeOption(String option) {
-    final isSelected = costType == option;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => costType = option),
-        child: Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryBlue : AppColors.primaryGray,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              option,
-              style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFFA4A4A4),
-                fontFamily: 'Poppins',
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPaymentOption(String option) {
     final isSelected = paymentOption == option;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => paymentOption = option),
+        onTap: () {
+          setState(() {
+            paymentOption = option;
+            _updateActiveFilters();
+          });
+        },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryBlue : AppColors.primaryGray,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              option,
-              style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFFA4A4A4),
-                fontFamily: 'Poppins',
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCapacityOption(String option) {
-    final isSelected = capacityOption == option;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() {
-          if (option == 'Any') {
-            capacityOption = 'Any';
-            customCapacity = null;
-            _capacityController.clear();
-          }
-        }),
-        child: Container(
-          height: 48,
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primaryBlue : AppColors.primaryGray,
@@ -854,49 +1038,48 @@ class _RideFiltersState extends State<RideFilters> {
 
     // Type filter
     if (selectedType != 'Any') {
-      activeFilters['type'] = selectedType;
+      activeFilters['vehicle_type'] = selectedType;
     }
 
     // Capacity filter
-    if (capacityOption != 'Any') {
-      activeFilters['capacityOption'] = capacityOption;
-      if (customCapacity != null) {
-        activeFilters['customCapacity'] = customCapacity;
-      }
+    if (capacityValue.isNotEmpty) {
+      activeFilters['min_seats'] = int.parse(capacityValue);
     }
 
-    // AC filter
-    if (acPreference != 'Any') {
-      activeFilters['acPreference'] = acPreference;
+    // Gender preference filter
+    if (genderPreference != 'Any') {
+      activeFilters['preferred_gender'] = genderPreference;
     }
 
     // Amount filter
     if (amountFilterType != 'Any') {
-      activeFilters['amountFilterType'] = amountFilterType;
       if (minAmount != null) {
-        activeFilters['minAmount'] = minAmount;
+        activeFilters['min_amount'] = minAmount;
       }
       if (maxAmount != null) {
-        activeFilters['maxAmount'] = maxAmount;
+        activeFilters['max_amount'] = maxAmount;
       }
-    }
-
-    // Cost type filter
-    if (costType != 'Any') {
-      activeFilters['costType'] = costType;
     }
 
     // Payment option filter
     if (paymentOption != 'Any') {
-      activeFilters['paymentOption'] = paymentOption;
+      activeFilters['payment_option'] = paymentOption;
     }
 
     // Date and time filters
     if (selectedDate != null) {
-      activeFilters['date'] = selectedDate;
+      activeFilters['date_after'] =
+          '${selectedDate!.year}-${selectedDate!.month.toString().padLeft(2, '0')}-${selectedDate!.day.toString().padLeft(2, '0')}';
     }
     if (selectedTime != null) {
-      activeFilters['time'] = selectedTime;
+      activeFilters['time_after'] =
+          '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}:00';
+    }
+
+    // Sorting
+    if (sortOption != '-date') {
+      // Only add if not default
+      activeFilters['ordering'] = sortOption;
     }
 
     return activeFilters;
@@ -906,115 +1089,6 @@ class _RideFiltersState extends State<RideFilters> {
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
-  }
-
-  List<ActiveFilter> _getActiveFilterBubbles() {
-    final List<ActiveFilter> filters = [];
-
-    if (selectedType != 'Any') {
-      filters.add(ActiveFilter(type: 'Type', value: selectedType));
-    }
-
-    if (capacityOption != 'Any') {
-      filters.add(ActiveFilter(
-        type: 'Capacity',
-        value: customCapacity?.toString() ?? capacityOption,
-      ));
-    }
-
-    if (acPreference != 'Any') {
-      filters.add(ActiveFilter(type: 'AC', value: acPreference!));
-    }
-
-    if (amountFilterType != 'Any') {
-      String value = '';
-      switch (amountFilterType) {
-        case 'Range':
-          if (minAmount != null && maxAmount != null) {
-            value =
-                '\$${minAmount!.toStringAsFixed(0)} - \$${maxAmount!.toStringAsFixed(0)}';
-          }
-          break;
-        case 'At Least':
-          if (minAmount != null) {
-            value = '≥ \$${minAmount!.toStringAsFixed(0)}';
-          }
-          break;
-        case 'At Most':
-          if (maxAmount != null) {
-            value = '≤ \$${maxAmount!.toStringAsFixed(0)}';
-          }
-          break;
-      }
-      if (value.isNotEmpty) {
-        filters.add(ActiveFilter(type: 'Amount', value: value));
-      }
-    }
-
-    if (costType != 'Any') {
-      filters.add(ActiveFilter(type: 'Cost', value: costType));
-    }
-
-    if (paymentOption != 'Any') {
-      filters.add(ActiveFilter(type: 'Payment', value: paymentOption));
-    }
-
-    if (selectedDate != null) {
-      filters.add(ActiveFilter(
-        type: 'Date',
-        value:
-            '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
-      ));
-    }
-
-    if (selectedTime != null) {
-      filters.add(ActiveFilter(
-        type: 'Time',
-        value: _formatTimeOfDay(selectedTime!),
-      ));
-    }
-
-    return filters;
-  }
-
-  void _removeFilter(String type) {
-    setState(() {
-      switch (type) {
-        case 'Type':
-          selectedType = 'Any';
-          break;
-        case 'Capacity':
-          capacityOption = 'Any';
-          customCapacity = null;
-          _capacityController.clear();
-          break;
-        case 'AC':
-          acPreference = 'Any';
-          break;
-        case 'Amount':
-          amountFilterType = 'Any';
-          minAmount = null;
-          maxAmount = null;
-          _minAmountController.clear();
-          _maxAmountController.clear();
-          break;
-        case 'Cost':
-          costType = 'Any';
-          break;
-        case 'Payment':
-          paymentOption = 'Any';
-          break;
-        case 'Date':
-          selectedDate = null;
-          break;
-        case 'Time':
-          selectedTime = null;
-          break;
-      }
-    });
-
-    // Update filters
-    widget.onApplyFilters(_getActiveFilters());
   }
 
   @override
@@ -1051,10 +1125,11 @@ class _RideFiltersState extends State<RideFilters> {
           ),
 
           // Active Filters
-          ActiveFilters(
-            filters: _getActiveFilterBubbles(),
-            onRemove: _removeFilter,
-          ),
+          if (activeFilters.isNotEmpty)
+            ActiveFilters(
+              filters: activeFilters,
+              onRemove: _removeFilter,
+            ),
 
           // Scrollable content
           Flexible(
@@ -1065,6 +1140,10 @@ class _RideFiltersState extends State<RideFilters> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 24),
+
+                    // Sorting Section (New)
+                    _buildSortingSection(),
                     const SizedBox(height: 24),
 
                     // Date & Time Filter
@@ -1092,37 +1171,16 @@ class _RideFiltersState extends State<RideFilters> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Capacity Filter
+                    // Capacity Filter (Modified)
                     _buildCapacitySection(),
                     const SizedBox(height: 24),
 
-                    // AC Filter
-                    const Text(
-                      'AC',
-                      style: TextStyle(
-                        color: Color(0xFFA4A4A4),
-                        fontFamily: 'Poppins',
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildACOption('Any'),
-                        const SizedBox(width: 12),
-                        _buildACOption('Yes'),
-                        const SizedBox(width: 12),
-                        _buildACOption('No'),
-                      ],
-                    ),
+                    // Gender Preference Filter (New)
+                    _buildGenderPreferenceSection(),
                     const SizedBox(height: 24),
 
                     // Amount Filter
                     _buildAmountSection(),
-                    const SizedBox(height: 24),
-
-                    // Cost Type Filter
-                    _buildCostTypeSection(),
                     const SizedBox(height: 24),
 
                     // Payment Option Filter
@@ -1155,13 +1213,11 @@ class _RideFiltersState extends State<RideFilters> {
                               // Reset all filters to default
                               setState(() {
                                 selectedType = 'Any';
-                                capacityOption = 'Any';
-                                customCapacity = null;
-                                acPreference = 'Any';
+                                capacityValue = '';
+                                genderPreference = 'Any';
                                 amountFilterType = 'Any';
                                 minAmount = null;
                                 maxAmount = null;
-                                costType = 'Any';
                                 paymentOption = 'Any';
                                 selectedDate = null;
                                 selectedTime = null;

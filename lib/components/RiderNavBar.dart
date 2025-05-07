@@ -5,6 +5,7 @@ import 'package:fastpool_fe/pages/riderExplore.dart';
 import 'package:fastpool_fe/pages/riderTrips.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/pages/riderProfile.dart';
+import 'package:fastpool_fe/pages/riderPendingRequests.dart';
 
 class RiderNavbar extends StatefulWidget {
   final int initialIndex;
@@ -37,9 +38,12 @@ class _RiderNavbarState extends State<RiderNavbar> {
         targetPage = const RideDiscover();
         break;
       case 2:
-        targetPage = const RiderTripsPage();
+        targetPage = const RiderPendingRequestsPage();
         break;
       case 3:
+        targetPage = const RiderTripsPage();
+        break;
+      case 4:
         targetPage = const RiderProfile();
         break;
       default:
@@ -74,8 +78,9 @@ class _RiderNavbarState extends State<RiderNavbar> {
         children: [
           _navIcon(icon: Icons.home_rounded, index: 0),
           _navIcon(icon: Icons.explore_rounded, index: 1),
-          _navIcon(icon: Icons.directions_car_rounded, index: 2),
-          _navIcon(icon: Icons.person_rounded, index: 3),
+          _navIcon(icon: Icons.pending_actions_rounded, index: 2),
+          _navIcon(icon: Icons.directions_car_rounded, index: 3),
+          _navIcon(icon: Icons.person_rounded, index: 4),
         ],
       ),
     );
