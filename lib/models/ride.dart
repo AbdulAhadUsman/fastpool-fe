@@ -64,7 +64,7 @@ class Vehicle {
 
 class Ride {
   final int id;
-  final Driver driver;
+  final dynamic driver; // Can be either Driver object or int ID
   final double sourceLat;
   final double sourceLng;
   final double destinationLat;
@@ -80,10 +80,10 @@ class Ride {
   final String date;
   final String? description;
   final List<dynamic> riders;
-  final String pickup; // For display purposes
-  final String destination; // For display purposes
-  final int duration; // in minutes
-  final double distance; // in kilometers
+  final String? pickup; // Optional since we might not have the address yet
+  final String? destination; // Optional since we might not have the address yet
+  final int? duration; // Optional since it might need to be computed
+  final double? distance; // Optional since it might need to be computed
 
   Ride({
     required this.id,
@@ -103,16 +103,18 @@ class Ride {
     required this.date,
     this.description,
     required this.riders,
-    required this.pickup,
-    required this.destination,
-    required this.duration,
-    required this.distance,
+    this.pickup,
+    this.destination,
+    this.duration,
+    this.distance,
   });
 
   factory Ride.fromJson(Map<String, dynamic> json) {
     return Ride(
       id: json['id'] ?? 0,
-      driver: Driver.fromJson(json['driver'] ?? {}),
+      driver: json['driver'] is Map
+          ? Driver.fromJson(json['driver'])
+          : json['driver'],
       sourceLat: (json['source_lat'] ?? 0.0).toDouble(),
       sourceLng: (json['source_lng'] ?? 0.0).toDouble(),
       destinationLat: (json['destination_lat'] ?? 0.0).toDouble(),
@@ -128,12 +130,10 @@ class Ride {
       date: json['date'] ?? '',
       description: json['description'],
       riders: json['riders'] ?? [],
-      // These fields need to be computed or fetched separately
-      pickup: 'Pickup Location', // This needs to be computed from coordinates
-      destination:
-          'Destination Location', // This needs to be computed from coordinates
-      duration: 0, // This needs to be computed
-      distance: 0.0, // This needs to be computed
+      pickup: null, // Will be set after geocoding
+      destination: null, // Will be set after geocoding
+      duration: null, // Will be computed if needed
+      distance: null, // Will be computed if needed
     );
   }
 }
