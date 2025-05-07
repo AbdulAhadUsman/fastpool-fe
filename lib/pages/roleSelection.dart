@@ -47,9 +47,10 @@ class RoleSelection extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Navigate to rider-related functionality
-                print('Rider selected');
+              onPressed: () async {
+                // Set the role as rider and navigate based on role
+                await AuthContext.setRole('rider');
+                await AuthContext.navigateUserBasedOnRole(context);
               },
               style: ElevatedButton.styleFrom(
                 padding:

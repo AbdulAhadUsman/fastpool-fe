@@ -1,5 +1,6 @@
 import 'package:fastpool_fe/pages/loading.dart';
 import 'package:fastpool_fe/pages/login.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
@@ -20,8 +21,9 @@ class AuthContext {
   static const _phoneKey = 'phone';
   static const _genderKey = 'gender';
   static const _ratingsKey = 'ratings';
+  static const _idkey = 'id';
 
-  static const _baseUrlKey = 'http://192.168.172.254:8000';
+  static const _baseUrlKey = 'http://192.168.100.214:8000';
   static String get _baseUrl =>
       dotenv.env['BASE_URL'] ?? 'http://192.168.100.214:8000';
 
@@ -71,6 +73,7 @@ class AuthContext {
     await _box.delete(_phoneKey);
     await _box.delete(_genderKey);
     await _box.delete(_ratingsKey);
+    await _box.delete(_idkey);
   }
 
   static bool isLoggedIn() {
@@ -102,6 +105,8 @@ class AuthContext {
     final role = getRole();
     final token = getToken();
 
+    print('Role: $role');
+
     if (role != null && token != null) {
       try {
         final response = await http.get(
@@ -112,7 +117,9 @@ class AuthContext {
         );
 
         if (response.statusCode == 200) {
+          print('after fetching');
           final data = json.decode(response.body);
+          final id = data['id'];
           final username = data['username'];
           final email = data['email'];
           final gender = data['gender'];
@@ -120,10 +127,14 @@ class AuthContext {
           final profilePicUrl = data['profile_picture_url'];
           final ratings = data['ratings'];
           final numberOfRatings = data['no_of_ratings'];
-          final vehicleInfo = List<Map<String, dynamic>>.from(data[
-              'vehicles']); // Assuming 'vehicles' contains the list of vehicle info
+          List<Map<String, dynamic>> vehicleInfo = [];
+          if (role == 'driver') {
+            vehicleInfo = List<Map<String, dynamic>>.from(data[
+                'vehicles']); // Assuming 'vehicles' contains the list of vehicle info
+          }
 
           // Save data to local storage
+          await _box.put(_idkey, id);
           await _box.put(_usernameKey, username);
           await _box.put(_emailKey, email);
           await _box.put(_genderKey, gender);
@@ -134,7 +145,7 @@ class AuthContext {
           if (vehicleInfo.isNotEmpty) {
             await cacheVehicleInfo(vehicleInfo);
           }
-
+          print('User ID: $id');
           print('User Profile:');
           print('Username: $username');
           print('Email: $email');
@@ -160,7 +171,7 @@ class AuthContext {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => RoleSelection()),
+        MaterialPageRoute(builder: (context) => RiderHomePage()),
       );
     }
   }
