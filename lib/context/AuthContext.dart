@@ -24,8 +24,9 @@ class AuthContext {
   static const _ratingsKey = 'ratings';
   static const _idkey = 'id';
 
+  static const baseUrl = 'http://10.0.2.2:8000';
   static String get _baseUrl =>
-      dotenv.env['BASE_URL'] ?? 'http://192.168.43.254:8000';
+      dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8000';
 
   // Initialize Hive (call this once at app startup)
   static Future<void> init() async {
@@ -34,12 +35,18 @@ class AuthContext {
       final dir = await getApplicationDocumentsDirectory();
       Hive.init(dir.path);
       await Hive.openBox(_boxName);
+      print('Hive initialized successfully');
     } catch (e) {
-      print('Error initializing Hive: $e');
-      // Fallback to temporary directory if needed
-      final tempDir = await getTemporaryDirectory();
-      Hive.init(tempDir.path);
-      await Hive.openBox(_boxName);
+      print('Error initializing Hive with application directory: $e');
+      try {
+        final tempDir = await getTemporaryDirectory();
+        Hive.init(tempDir.path);
+        await Hive.openBox(_boxName);
+        print('Hive initialized successfully with temporary directory');
+      } catch (e) {
+        print('Critical error initializing Hive: $e');
+        throw Exception('Failed to initialize Hive: $e');
+      }
     }
   }
 
@@ -187,10 +194,26 @@ class AuthContext {
         final data = json.decode(response.body);
         await saveToken(data['access_token']);
 
+        // Store user role
+        if (data['role'] != null) {
+          await setRole(data['role']);
+        }
+
+        // Store basic user info
+        if (data['username'] != null)
+          await _box.put(_usernameKey, data['username']);
+        if (data['email'] != null) await _box.put(_emailKey, data['email']);
+        if (data['phone'] != null) await _box.put(_phoneKey, data['phone']);
+        if (data['gender'] != null) await _box.put(_genderKey, data['gender']);
+        if (data['ratings'] != null)
+          await _box.put(_ratingsKey, data['ratings']);
+        if (data['id'] != null) await _box.put(_idkey, data['id']);
+
         return true;
       }
       return false;
     } catch (e) {
+      print('Login error: $e');
       return false;
     }
   }
