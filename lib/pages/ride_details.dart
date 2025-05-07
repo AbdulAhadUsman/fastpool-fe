@@ -6,6 +6,7 @@ import 'dart:convert';
 import '../constants/api.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'location_picker.dart';
+import '../services/api_client.dart';
 
 class RideDetailsPage extends StatefulWidget {
   final Ride ride;
@@ -27,6 +28,8 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
   Set<Polyline> polylines = {};
   bool isMapLoading = true;
   Set<String> expandedRiders = {}; // Track expanded state of rider cards
+  final ApiClient _apiClient = ApiClient();
+  bool isRequesting = false;
 
   // Request ride state
   LatLng? requestPickupLocation;
@@ -681,6 +684,62 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
     return '$hour:$minute $period';
   }
 
+  Future<void> _handleRideRequest() async {
+    if (isRequesting) return;
+
+    setState(() {
+      isRequesting = true;
+    });
+
+    try {
+      // Get the pickup location
+      final pickupLat = useRidePickupLocation
+          ? widget.ride.sourceLat
+          : requestPickupLocation!.latitude;
+      final pickupLng = useRidePickupLocation
+          ? widget.ride.sourceLng
+          : requestPickupLocation!.longitude;
+
+      // Get the pickup time
+      final pickupTime = useRideTime
+          ? widget.ride.time
+          : '${requestPickupTime!.hour.toString().padLeft(2, '0')}:${requestPickupTime!.minute.toString().padLeft(2, '0')}:00';
+
+      // Create the ride request
+      await _apiClient.createRideRequest(
+        rideId: widget.ride.id,
+        pickupLat: pickupLat,
+        pickupLng: pickupLng,
+        pickupTime: pickupTime,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ride request sent successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send ride request: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isRequesting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -924,10 +983,9 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
               child: ElevatedButton(
                 onPressed:
                     (useRidePickupLocation || requestPickupLocation != null) &&
-                            (useRideTime || requestPickupTime != null)
-                        ? () {
-                            // TODO: Implement request functionality
-                          }
+                            (useRideTime || requestPickupTime != null) &&
+                            !isRequesting
+                        ? _handleRideRequest
                         : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
@@ -938,15 +996,24 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'Request Ride',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Poppins',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: isRequesting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Request Ride',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ),
           ],
