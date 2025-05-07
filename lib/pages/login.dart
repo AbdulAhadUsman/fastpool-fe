@@ -1,5 +1,6 @@
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:fastpool_fe/components/my_textField.dart';
+import 'package:fastpool_fe/pages/roleSelection.dart';
 import 'package:fastpool_fe/pages/signup.dart';
 import 'package:fastpool_fe/pages/forgotPassword.dart';
 import 'package:flutter/gestures.dart';
@@ -32,8 +33,11 @@ class _LoginState extends State<Login> {
         );
 
         if (success) {
-          // Navigate the user based on their role
-          await AuthContext.navigateUserBasedOnRole(context);
+          // Navigate the user to the RoleSelectionPage
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => RoleSelection()),
+          );
         } else {
           // Show error message if login fails
           ScaffoldMessenger.of(context).showSnackBar(
