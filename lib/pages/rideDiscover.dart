@@ -61,6 +61,7 @@ class _RideDiscoverState extends State<RideDiscover>
 
   // Rides data
   List<Ride> rides = [];
+  Map<int, Map<String, String?>> addressCache = {};
 
   bool isFastNucesLocation(String? address) {
     if (address == null) return false;
@@ -190,19 +191,82 @@ class _RideDiscoverState extends State<RideDiscover>
         filters: currentFilters,
       );
 
-      // Process each ride to get addresses
-      final List<Ride> processedRides = await Future.wait(
-        response.results.map((ride) async {
-          final sourceAddress = await getAddressFromLatLng(
-            ride.sourceLat,
-            ride.sourceLng,
-          );
-          final destinationAddress = await getAddressFromLatLng(
-            ride.destinationLat,
-            ride.destinationLng,
-          );
+      final List<Ride> newRides = response.results
+          .map((ride) => Ride(
+                id: ride.id,
+                driver: ride.driver,
+                sourceLat: ride.sourceLat,
+                sourceLng: ride.sourceLng,
+                destinationLat: ride.destinationLat,
+                destinationLng: ride.destinationLng,
+                vehicle: ride.vehicle,
+                time: ride.time,
+                capacity: ride.capacity,
+                availableSeats: ride.availableSeats,
+                amount: ride.amount,
+                preferredGender: ride.preferredGender,
+                paymentOption: ride.paymentOption,
+                expirationTime: ride.expirationTime,
+                date: ride.date,
+                description: ride.description,
+                riders: ride.riders,
+                pickup: null,
+                destination: null,
+                duration: ride.duration,
+                distance: ride.distance,
+              ))
+          .toList();
 
-          return Ride(
+      setState(() {
+        if (nextCursor == null) {
+          // First load or refresh
+          rides = newRides;
+        } else {
+          // Loading more
+          rides.addAll(newRides);
+        }
+        nextCursor = response.nextCursor;
+        isLoading = false;
+        isLoadingMore = false;
+      });
+
+      // Load addresses asynchronously
+      for (var ride in newRides) {
+        _loadAddressesForRide(ride);
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Failed to load rides: $e';
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    }
+  }
+
+  Future<void> _loadAddressesForRide(Ride ride) async {
+    if (addressCache[ride.id] != null) return;
+
+    try {
+      final sourceAddress = await getAddressFromLatLng(
+        ride.sourceLat,
+        ride.sourceLng,
+      );
+
+      final destinationAddress = await getAddressFromLatLng(
+        ride.destinationLat,
+        ride.destinationLng,
+      );
+
+      setState(() {
+        addressCache[ride.id] = {
+          'source': sourceAddress,
+          'destination': destinationAddress,
+        };
+
+        // Update the ride object with the addresses
+        final index = rides.indexWhere((r) => r.id == ride.id);
+        if (index != -1) {
+          rides[index] = Ride(
             id: ride.id,
             driver: ride.driver,
             sourceLat: ride.sourceLat,
@@ -225,28 +289,15 @@ class _RideDiscoverState extends State<RideDiscover>
             duration: ride.duration,
             distance: ride.distance,
           );
-        }),
-      );
-
-      setState(() {
-        if (nextCursor == null) {
-          // First load or refresh
-          rides = processedRides;
-        } else {
-          // Loading more
-          rides.addAll(processedRides);
         }
-        nextCursor = response.nextCursor;
-        isLoading = false;
-        isLoadingMore = false;
       });
     } catch (e) {
-      setState(() {
-        errorMessage = 'Failed to load rides: $e';
-        isLoading = false;
-        isLoadingMore = false;
-      });
+      print('Error loading addresses for ride ${ride.id}: $e');
     }
+  }
+
+  String? _getAddress(int rideId, String type) {
+    return addressCache[rideId]?[type];
   }
 
   void _updateFilterIconPosition() {
