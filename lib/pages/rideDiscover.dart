@@ -6,11 +6,16 @@ import '../models/ride.dart';
 import '../components/RiderNavBar.dart';
 import '../components/ride_filters.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import '../services/api_client.dart';
+import '../helper-functions/reverseGeoLoc.dart';
+import '../components/shimmer_widgets.dart';
 import 'location_picker.dart';
 import 'route_map_view.dart';
+import 'dart:math' show min;
 
 // FAST NUCES Lahore constants
-const fastNucesLocation = LatLng(31.4820, 74.3029);
+const fastNucesLocation = LatLng(37.426573, -122.091052);
 const fastNucesAddress = 'FAST NUCES, Block B1 Faisal Town, Lahore';
 
 // Keywords to identify FAST NUCES location
@@ -31,20 +36,31 @@ class _RideDiscoverState extends State<RideDiscover>
   late final Animation<double> _animation;
   late final AnimationController _filterAnimationController;
   late final Animation<Offset> _filterSlideAnimation;
+  final ApiClient _apiClient = ApiClient();
 
   bool isPickupFocused = false;
   bool isDestinationFocused = false;
   bool isFilterVisible = false;
-  Map<String, dynamic> currentFilters = {};
+  bool isLoading = true;
+  String? errorMessage;
+  Map<String, dynamic> currentFilters = {
+    'role': 'rider',
+  };
   List<ActiveFilter> activeFilters = [];
   GlobalKey filterIconKey = GlobalKey();
   double? filterIconYPosition;
+  String? nextCursor;
+  bool isLoadingMore = false;
 
   // Location state
+  LatLng? currentLocation;
   LatLng? pickupLocation;
   String? pickupAddress;
   LatLng destinationLocation = fastNucesLocation;
   String destinationAddress = fastNucesAddress;
+
+  // Rides data
+  List<Ride> rides = [];
 
   bool isFastNucesLocation(String? address) {
     if (address == null) return false;
@@ -53,94 +69,23 @@ class _RideDiscoverState extends State<RideDiscover>
         .any((keyword) => lowerAddress.contains(keyword.toLowerCase()));
   }
 
-  // Sample rides data
-  final List<Ride> rides = [
-    Ride(
-      id: 1,
-      driver: Driver(
-        username: 'John Doe',
-        email: 'john.doe@example.com',
-        gender: 'Male',
-        phone: '+92 300 1234567',
-        profilePic: 'https://xsgames.co/randomusers/avatar.php?g=male',
-        riderRating: 0.0,
-        driverRating: 4.8,
-      ),
-      sourceLat: 24.8880,
-      sourceLng: 67.2212,
-      destinationLat: 24.9475,
-      destinationLng: 67.1007,
-      vehicle: Vehicle(
-        id: 1,
-        driver: 1,
-        name: 'Honda City',
-        registrationNumber: 'ABC-123',
-        type: 'Sedan',
-        capacity: 4,
-        hasAC: true,
-      ),
-      time: '08:00:00',
-      capacity: 4,
-      availableSeats: 3,
-      amount: 100,
-      preferredGender: 'Any',
-      paymentOption: 'Cash',
-      expirationTime: '23:59:00',
-      date: '2024-03-20',
-      description: 'Ride from Gulshan to Saddar. AC: Yes',
-      riders: [],
-      pickup: 'Gulshan-e-Iqbal, Block 13',
-      destination: 'Saddar, Empress Market',
-      duration: 45,
-      distance: 12.5,
-    ),
-    Ride(
-      id: 2,
-      driver: Driver(
-        username: 'Jane Smith',
-        email: 'jane.smith@example.com',
-        gender: 'Female',
-        phone: '+92 300 7654321',
-        profilePic: 'https://xsgames.co/randomusers/avatar.php?g=female',
-        riderRating: 0.0,
-        driverRating: 4.9,
-      ),
-      sourceLat: 24.9283,
-      sourceLng: 67.0841,
-      destinationLat: 24.8600,
-      destinationLng: 67.0011,
-      vehicle: Vehicle(
-        id: 2,
-        driver: 2,
-        name: 'Toyota Corolla',
-        registrationNumber: 'XYZ-789',
-        type: 'Sedan',
-        capacity: 4,
-        hasAC: true,
-      ),
-      time: '09:00:00',
-      capacity: 4,
-      availableSeats: 2,
-      amount: 150,
-      preferredGender: 'Any',
-      paymentOption: 'Cash',
-      expirationTime: '23:59:00',
-      date: '2024-03-20',
-      description: 'Ride from North Nazimabad to DHA. AC: Yes',
-      riders: [],
-      pickup: 'North Nazimabad, Block A',
-      destination: 'DHA Phase 6',
-      duration: 30,
-      distance: 8.7,
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
     pickupFocusNode = FocusNode();
     destinationFocusNode = FocusNode();
 
+    _setupAnimations();
+    _setupFocusListeners();
+    _requestLocationPermission();
+
+    // Add post-frame callback to get filter icon position
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateFilterIconPosition();
+    });
+  }
+
+  void _setupAnimations() {
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -163,7 +108,9 @@ class _RideDiscoverState extends State<RideDiscover>
       parent: _filterAnimationController,
       curve: Curves.easeInOut,
     ));
+  }
 
+  void _setupFocusListeners() {
     pickupFocusNode.addListener(() {
       setState(() {
         isPickupFocused = pickupFocusNode.hasFocus;
@@ -175,11 +122,131 @@ class _RideDiscoverState extends State<RideDiscover>
         isDestinationFocused = destinationFocusNode.hasFocus;
       });
     });
+  }
 
-    // Add post-frame callback to get filter icon position
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateFilterIconPosition();
+  Future<void> _requestLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        errorMessage = 'Location services are disabled.';
+        isLoading = false;
+      });
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          errorMessage = 'Location permissions are denied.';
+          isLoading = false;
+        });
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        errorMessage =
+            'Location permissions are permanently denied, we cannot request permissions.';
+        isLoading = false;
+      });
+      return;
+    }
+
+    // Get current location
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      setState(() {
+        currentLocation = LatLng(position.latitude, position.longitude);
+      });
+      _fetchRides();
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error getting location: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchRides() async {
+    if (isLoadingMore) return;
+
+    setState(() {
+      isLoading = nextCursor == null;
+      isLoadingMore = nextCursor != null;
+      errorMessage = null;
     });
+
+    try {
+      final response = await _apiClient.searchRides(
+        currentLocation: currentLocation,
+        cursor: nextCursor,
+        filters: currentFilters,
+      );
+
+      // Process each ride to get addresses
+      final List<Ride> processedRides = await Future.wait(
+        response.results.map((ride) async {
+          final sourceAddress = await getAddressFromLatLng(
+            ride.sourceLat,
+            ride.sourceLng,
+          );
+          final destinationAddress = await getAddressFromLatLng(
+            ride.destinationLat,
+            ride.destinationLng,
+          );
+
+          return Ride(
+            id: ride.id,
+            driver: ride.driver,
+            sourceLat: ride.sourceLat,
+            sourceLng: ride.sourceLng,
+            destinationLat: ride.destinationLat,
+            destinationLng: ride.destinationLng,
+            vehicle: ride.vehicle,
+            time: ride.time,
+            capacity: ride.capacity,
+            availableSeats: ride.availableSeats,
+            amount: ride.amount,
+            preferredGender: ride.preferredGender,
+            paymentOption: ride.paymentOption,
+            expirationTime: ride.expirationTime,
+            date: ride.date,
+            description: ride.description,
+            riders: ride.riders,
+            pickup: sourceAddress,
+            destination: destinationAddress,
+            duration: ride.duration,
+            distance: ride.distance,
+          );
+        }),
+      );
+
+      setState(() {
+        if (nextCursor == null) {
+          // First load or refresh
+          rides = processedRides;
+        } else {
+          // Loading more
+          rides.addAll(processedRides);
+        }
+        nextCursor = response.nextCursor;
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Failed to load rides: $e';
+        isLoading = false;
+        isLoadingMore = false;
+      });
+    }
   }
 
   void _updateFilterIconPosition() {
@@ -202,8 +269,19 @@ class _RideDiscoverState extends State<RideDiscover>
     super.dispose();
   }
 
+  bool get isLoadingState => isLoading || isLoadingMore;
+
   Future<void> _toggleFilter() async {
-    _updateFilterIconPosition();
+    if (isLoadingState) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait while rides are being loaded...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isFilterVisible = !isFilterVisible;
     });
@@ -217,124 +295,161 @@ class _RideDiscoverState extends State<RideDiscover>
 
   void _handleFilters(Map<String, dynamic> filters) {
     setState(() {
-      currentFilters = filters;
-      _updateActiveFilters();
+      // Merge with the role parameter
+      currentFilters = {
+        'role': 'rider',
+        ...filters,
+      };
+      // Update active filters list
+      activeFilters = _getActiveFilterBubbles();
     });
-  }
-
-  void _updateActiveFilters() {
-    activeFilters = _getActiveFilterBubbles();
   }
 
   List<ActiveFilter> _getActiveFilterBubbles() {
     final List<ActiveFilter> filters = [];
 
-    if (currentFilters.isEmpty) return filters;
-
-    if (currentFilters['type'] != null) {
-      filters.add(ActiveFilter(type: 'Type', value: currentFilters['type']));
-    }
-
-    if (currentFilters['capacityOption'] != null &&
-        currentFilters['capacityOption'] != 'Any') {
-      final value = currentFilters['customCapacity']?.toString() ??
-          currentFilters['capacityOption'];
-      filters.add(ActiveFilter(type: 'Capacity', value: value));
-    }
-
-    if (currentFilters['acPreference'] != null) {
-      filters
-          .add(ActiveFilter(type: 'AC', value: currentFilters['acPreference']));
-    }
-
-    if (currentFilters['amountFilterType'] != null &&
-        currentFilters['amountFilterType'] != 'Any') {
-      String value = '';
-      switch (currentFilters['amountFilterType']) {
-        case 'Range':
-          if (currentFilters['minAmount'] != null &&
-              currentFilters['maxAmount'] != null) {
-            value =
-                'Rs. ${currentFilters['minAmount'].toStringAsFixed(0)} - Rs. ${currentFilters['maxAmount'].toStringAsFixed(0)}';
-          }
-          break;
-        case 'At Least':
-          if (currentFilters['minAmount'] != null) {
-            value = '≥ Rs. ${currentFilters['minAmount'].toStringAsFixed(0)}';
-          }
-          break;
-        case 'At Most':
-          if (currentFilters['maxAmount'] != null) {
-            value = '≤ Rs. ${currentFilters['maxAmount'].toStringAsFixed(0)}';
-          }
-          break;
-      }
-      if (value.isNotEmpty) {
-        filters.add(ActiveFilter(type: 'Amount', value: value));
-      }
-    }
-
-    if (currentFilters['costType'] != null) {
-      filters
-          .add(ActiveFilter(type: 'Cost', value: currentFilters['costType']));
-    }
-
-    if (currentFilters['paymentOption'] != null) {
+    // Vehicle Type filter
+    if (currentFilters['vehicle_type'] != null) {
       filters.add(ActiveFilter(
-          type: 'Payment', value: currentFilters['paymentOption']));
-    }
-
-    if (currentFilters['date'] != null) {
-      final date = currentFilters['date'] as DateTime;
-      filters.add(ActiveFilter(
-        type: 'Date',
-        value: '${date.day}/${date.month}/${date.year}',
+        type: 'Vehicle',
+        value: currentFilters['vehicle_type'],
       ));
     }
 
-    if (currentFilters['time'] != null) {
-      final time = currentFilters['time'] as TimeOfDay;
-      final hour = time.hour.toString().padLeft(2, '0');
-      final minute = time.minute.toString().padLeft(2, '0');
-      filters.add(ActiveFilter(type: 'Time', value: '$hour:$minute'));
+    // Minimum Seats filter
+    if (currentFilters['min_seats'] != null) {
+      filters.add(ActiveFilter(
+        type: 'Seats',
+        value: '≥ ${currentFilters['min_seats']}',
+      ));
+    }
+
+    // Gender Preference filter
+    if (currentFilters['preferred_gender'] != null) {
+      filters.add(ActiveFilter(
+        type: 'Gender',
+        value: currentFilters['preferred_gender'],
+      ));
+    }
+
+    // Amount Range filters
+    if (currentFilters['min_amount'] != null ||
+        currentFilters['max_amount'] != null) {
+      String value = '';
+      if (currentFilters['min_amount'] != null &&
+          currentFilters['max_amount'] != null) {
+        value =
+            'Rs. ${currentFilters['min_amount']} - ${currentFilters['max_amount']}';
+      } else if (currentFilters['min_amount'] != null) {
+        value = '≥ Rs. ${currentFilters['min_amount']}';
+      } else {
+        value = '≤ Rs. ${currentFilters['max_amount']}';
+      }
+      filters.add(ActiveFilter(type: 'Amount', value: value));
+    }
+
+    // Payment Option filter
+    if (currentFilters['payment_option'] != null) {
+      filters.add(ActiveFilter(
+        type: 'Payment',
+        value: currentFilters['payment_option'],
+      ));
+    }
+
+    // Sort filter
+    if (currentFilters['ordering'] != null) {
+      String sortValue = '';
+      switch (currentFilters['ordering']) {
+        case '-date':
+          sortValue = 'Newest First';
+          break;
+        case 'date':
+          sortValue = 'Oldest First';
+          break;
+        case 'time':
+          sortValue = 'Early to Late';
+          break;
+        case '-time':
+          sortValue = 'Late to Early';
+          break;
+        case 'amount':
+          sortValue = 'Price: Low to High';
+          break;
+        case '-amount':
+          sortValue = 'Price: High to Low';
+          break;
+      }
+      if (sortValue.isNotEmpty) {
+        filters.add(ActiveFilter(type: 'Sort', value: sortValue));
+      }
     }
 
     return filters;
   }
 
   void _removeFilter(String type) {
+    if (isLoadingState) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait while rides are being loaded...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       switch (type) {
-        case 'Type':
-          currentFilters.remove('type');
+        case 'Vehicle':
+          currentFilters.remove('vehicle_type');
           break;
-        case 'Capacity':
-          currentFilters.remove('capacityOption');
-          currentFilters.remove('customCapacity');
+        case 'Seats':
+          currentFilters.remove('min_seats');
           break;
-        case 'AC':
-          currentFilters.remove('acPreference');
+        case 'Gender':
+          currentFilters.remove('preferred_gender');
           break;
         case 'Amount':
-          currentFilters.remove('amountFilterType');
-          currentFilters.remove('minAmount');
-          currentFilters.remove('maxAmount');
-          break;
-        case 'Cost':
-          currentFilters.remove('costType');
+          currentFilters.remove('min_amount');
+          currentFilters.remove('max_amount');
           break;
         case 'Payment':
-          currentFilters.remove('paymentOption');
+          currentFilters.remove('payment_option');
           break;
-        case 'Date':
-          currentFilters.remove('date');
-          break;
-        case 'Time':
-          currentFilters.remove('time');
+        case 'Sort':
+          currentFilters.remove('ordering');
           break;
       }
-      _updateActiveFilters();
+      activeFilters = _getActiveFilterBubbles();
     });
+  }
+
+  void _handleSearch() {
+    if (isLoadingState) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait while rides are being loaded...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Update location filters
+    setState(() {
+      if (pickupLocation != null) {
+        currentFilters['source_lat'] = pickupLocation!.latitude;
+        currentFilters['source_lng'] = pickupLocation!.longitude;
+      }
+      if (destinationLocation != null) {
+        currentFilters['destination_lat'] = destinationLocation.latitude;
+        currentFilters['destination_lng'] = destinationLocation.longitude;
+      }
+    });
+
+    // Reset cursor and fetch rides with current filters
+    nextCursor = null;
+    _fetchRides();
   }
 
   Future<void> _handleOutsideTap() async {
@@ -372,8 +487,17 @@ class _RideDiscoverState extends State<RideDiscover>
   }
 
   void _handleLocationSelection(bool isPickup) async {
+    if (isLoadingState) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please wait while rides are being loaded...'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     if (!isPickup && !isFastNucesLocation(pickupAddress)) {
-      // Don't allow changing destination if pickup is not FAST
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content:
@@ -400,7 +524,6 @@ class _RideDiscoverState extends State<RideDiscover>
           pickupLocation = result['location'] as LatLng;
           pickupAddress = result['address'] as String;
 
-          // If pickup is not FAST, force destination to be FAST
           if (!isFastNucesLocation(pickupAddress)) {
             destinationLocation = fastNucesLocation;
             destinationAddress = fastNucesAddress;
@@ -409,6 +532,8 @@ class _RideDiscoverState extends State<RideDiscover>
           destinationLocation = result['location'] as LatLng;
           destinationAddress = result['address'] as String;
         }
+        // Update active filters to show the new location
+        activeFilters = _getActiveFilterBubbles();
       });
     }
   }
@@ -416,150 +541,196 @@ class _RideDiscoverState extends State<RideDiscover>
   Widget _buildLocationInputs() {
     return Column(
       children: [
-        Stack(
-          children: [
-            Container(
-              height: 120,
-              margin: const EdgeInsets.only(right: 50),
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: 4,
-                    top: 25,
-                    height: 70,
-                    child: Container(
-                      width: 2,
-                      color: const Color(0xFFA4A4A4),
+        Container(
+          height: 120,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left section with shapes and inputs
+              Expanded(
+                child: Stack(
+                  children: [
+                    // Vertical line
+                    Positioned(
+                      left: 4,
+                      top: 25,
+                      height: 70,
+                      child: Container(
+                        width: 2,
+                        color: const Color(0xFFA4A4A4),
+                      ),
                     ),
-                  ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          _buildGlowingShape(
-                            isSquare: false,
-                            isFocused: isPickupFocused,
-                          ),
-                          const SizedBox(width: 20),
-                          SizedBox(
-                            width: 280,
-                            child: TextField(
-                              focusNode: pickupFocusNode,
-                              readOnly: true,
-                              onTap: () => _handleLocationSelection(true),
-                              controller:
-                                  TextEditingController(text: pickupAddress),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'Poppins',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Pickup',
-                                hintStyle: const TextStyle(
-                                  color: Color(0xFFA4A4A4),
+                    // Input fields and shapes
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Pickup row
+                        Row(
+                          children: [
+                            _buildGlowingShape(
+                              isSquare: false,
+                              isFocused: isPickupFocused,
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: TextField(
+                                focusNode: pickupFocusNode,
+                                readOnly: true,
+                                enabled: !isLoadingState,
+                                onTap: () => _handleLocationSelection(true),
+                                controller:
+                                    TextEditingController(text: pickupAddress),
+                                style: TextStyle(
+                                  color: isLoadingState
+                                      ? Colors.grey
+                                      : Colors.white,
                                   fontFamily: 'Poppins',
                                 ),
-                                filled: true,
-                                fillColor: const Color(0xFF282828),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
+                                decoration: InputDecoration(
+                                  hintText: 'Pickup',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFFA4A4A4),
+                                    fontFamily: 'Poppins',
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFF282828),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          _buildGlowingShape(
-                            isSquare: true,
-                            isFocused: isDestinationFocused,
-                          ),
-                          const SizedBox(width: 20),
-                          SizedBox(
-                            width: 280,
-                            child: TextField(
-                              focusNode: destinationFocusNode,
-                              readOnly: true,
-                              onTap: () => _handleLocationSelection(false),
-                              controller: TextEditingController(
-                                  text: destinationAddress),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'Poppins',
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Destination',
-                                hintStyle: const TextStyle(
-                                  color: Color(0xFFA4A4A4),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        // Destination row
+                        Row(
+                          children: [
+                            _buildGlowingShape(
+                              isSquare: true,
+                              isFocused: isDestinationFocused,
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: TextField(
+                                focusNode: destinationFocusNode,
+                                readOnly: true,
+                                enabled: !isLoadingState,
+                                onTap: () => _handleLocationSelection(false),
+                                controller: TextEditingController(
+                                    text: destinationAddress),
+                                style: TextStyle(
+                                  color: isLoadingState
+                                      ? Colors.grey
+                                      : Colors.white,
                                   fontFamily: 'Poppins',
                                 ),
-                                filled: true,
-                                fillColor: const Color(0xFF282828),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
+                                decoration: InputDecoration(
+                                  hintText: 'Destination',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFFA4A4A4),
+                                    fontFamily: 'Poppins',
+                                  ),
+                                  filled: true,
+                                  fillColor: const Color(0xFF282828),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Filter icon
-            Positioned(
-              right: 0,
-              top: 42,
-              child: GestureDetector(
-                onTap: _toggleFilter,
-                child: Container(
-                  key: filterIconKey,
-                  child: SvgPicture.asset(
-                    'assets/icons/Filter.svg',
-                    width: 26,
-                    height: 29,
-                    colorFilter: const ColorFilter.mode(
-                      Color(0xFFA4A4A4),
-                      BlendMode.srcIn,
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              // Right section with icons
+              Container(
+                width: 50,
+                margin: const EdgeInsets.only(left: 16),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Search Icon
+                    GestureDetector(
+                      onTap: isLoadingState ? null : _handleSearch,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF282828),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.search,
+                          color: isLoadingState
+                              ? const Color(0xFF666666)
+                              : AppColors.primaryBlue,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    // Filter Icon
+                    GestureDetector(
+                      onTap: isLoadingState ? null : _toggleFilter,
+                      child: Container(
+                        key: filterIconKey,
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF282828),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/icons/Filter.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(
+                            isLoadingState
+                                ? const Color(0xFF666666)
+                                : const Color(0xFFA4A4A4),
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         if (pickupLocation != null && destinationLocation != null) ...[
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RouteMapView(
-                      pickupLocation: pickupLocation!,
-                      destinationLocation: destinationLocation,
-                      pickupAddress: pickupAddress!,
-                      destinationAddress: destinationAddress,
-                    ),
-                  ),
-                );
-              },
+              onPressed: isLoadingState
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RouteMapView(
+                            pickupLocation: pickupLocation!,
+                            destinationLocation: destinationLocation,
+                            pickupAddress: pickupAddress!,
+                            destinationAddress: destinationAddress,
+                          ),
+                        ),
+                      );
+                    },
               icon: const Icon(Icons.map, color: Colors.white),
               label: const Text(
                 'View on Map',
@@ -572,6 +743,7 @@ class _RideDiscoverState extends State<RideDiscover>
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryBlue,
+                disabledBackgroundColor: AppColors.primaryBlue.withOpacity(0.5),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -629,12 +801,142 @@ class _RideDiscoverState extends State<RideDiscover>
                     ],
                     const SizedBox(height: 20),
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: rides.length,
-                        itemBuilder: (context, index) {
-                          return RideCard(ride: rides[index]);
-                        },
-                      ),
+                      child: isLoading
+                          ? ListView.builder(
+                              itemCount:
+                                  5, // Show 5 shimmer cards while loading
+                              itemBuilder: (context, index) {
+                                return const Padding(
+                                  padding: EdgeInsets.only(bottom: 10),
+                                  child: RideCardShimmer(),
+                                );
+                              },
+                            )
+                          : errorMessage != null
+                              ? Center(
+                                  child: Text(
+                                    errorMessage!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontFamily: 'Poppins',
+                                    ),
+                                  ),
+                                )
+                              : rides.isEmpty
+                                  ? Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 24.0),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.search_off_rounded,
+                                              size: 64,
+                                              color: AppColors.primaryBlue
+                                                  .withOpacity(0.7),
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text(
+                                              'No Rides Found',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 24,
+                                                fontFamily: 'Poppins',
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'We couldn\'t find any rides matching your search criteria. Try adjusting your filters or search for a different route.',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                color: Colors.grey[400],
+                                                fontSize: 16,
+                                                fontFamily: 'Poppins',
+                                              ),
+                                            ),
+                                            const SizedBox(height: 24),
+                                            ElevatedButton.icon(
+                                              onPressed: () {
+                                                // Reset filters and search
+                                                setState(() {
+                                                  currentFilters = {
+                                                    'role': 'rider',
+                                                  };
+                                                  activeFilters = [];
+                                                  nextCursor = null;
+                                                });
+                                                _fetchRides();
+                                              },
+                                              icon: const Icon(
+                                                  Icons.refresh_rounded,
+                                                  color: Colors.white),
+                                              label: const Text(
+                                                'Reset Filters',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontFamily: 'Poppins',
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.primaryBlue,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                  horizontal: 24,
+                                                  vertical: 12,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  : NotificationListener<ScrollNotification>(
+                                      onNotification:
+                                          (ScrollNotification scrollInfo) {
+                                        if (!isLoadingMore &&
+                                            nextCursor != null &&
+                                            scrollInfo.metrics.pixels ==
+                                                scrollInfo
+                                                    .metrics.maxScrollExtent) {
+                                          _fetchRides();
+                                        }
+                                        return true;
+                                      },
+                                      child: RefreshIndicator(
+                                        onRefresh: () async {
+                                          nextCursor = null;
+                                          await _fetchRides();
+                                        },
+                                        color: AppColors.primaryBlue,
+                                        backgroundColor:
+                                            AppColors.backgroundColor,
+                                        child: ListView.builder(
+                                          itemCount: rides.length +
+                                              (isLoadingMore
+                                                  ? 3
+                                                  : 0), // Show 3 shimmer cards while loading more
+                                          itemBuilder: (context, index) {
+                                            if (index >= rides.length) {
+                                              return const Padding(
+                                                padding:
+                                                    EdgeInsets.only(bottom: 10),
+                                                child: RideCardShimmer(),
+                                              );
+                                            }
+                                            return RideCard(ride: rides[index]);
+                                          },
+                                        ),
+                                      ),
+                                    ),
                     ),
                   ],
                 ),
@@ -651,36 +953,66 @@ class _RideDiscoverState extends State<RideDiscover>
                 ),
               ),
             ),
-          // Filter panel
-          if (isFilterVisible && filterIconYPosition != null)
-            Positioned(
-              right: 20,
-              top: filterIconYPosition! - 20,
+          // Centered Filter panel
+          if (isFilterVisible)
+            Positioned.fill(
               child: SlideTransition(
                 position: _filterSlideAnimation,
-                child: GestureDetector(
-                  onTap: () {}, // Prevent taps from reaching the overlay
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primaryGray,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: RideFilters(
-                      onApplyFilters: _handleFilters,
-                      initialFilters: currentFilters,
-                      onClose: _toggleFilter,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Calculate available space
+                        final screenHeight = MediaQuery.of(context).size.height;
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final bottomNavHeight = kBottomNavigationBarHeight;
+                        final safeAreaTop = MediaQuery.of(context).padding.top;
+                        final safeAreaBottom =
+                            MediaQuery.of(context).padding.bottom;
+
+                        // Calculate maximum dimensions
+                        // Leave 20px padding from all sides and nav bars
+                        final maxHeight = screenHeight -
+                            safeAreaTop -
+                            bottomNavHeight -
+                            safeAreaBottom -
+                            40;
+                        final maxWidth = screenWidth - 40;
+
+                        // Use the smaller of maxHeight or 80% of available height
+                        final targetHeight = min(
+                            maxHeight,
+                            (screenHeight - safeAreaTop - safeAreaBottom) *
+                                0.8);
+                        final targetWidth =
+                            min(maxWidth, 400.0); // Max width of 400
+
+                        return Container(
+                          width: targetWidth,
+                          height: targetHeight,
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primaryGray,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: RideFilters(
+                            onApplyFilters: _handleFilters,
+                            initialFilters: currentFilters,
+                            onClose: _toggleFilter,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
