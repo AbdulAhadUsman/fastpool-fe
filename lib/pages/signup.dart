@@ -61,13 +61,14 @@ class _SignUpState extends State<SignUp> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => verifyAccount(
-              username: username,
-              gender: gender,
-              phone: phone,
-              email: email,
-              password: password,
-            ),
+            builder:
+                (context) => verifyAccount(
+                  username: username,
+                  gender: gender,
+                  phone: phone,
+                  email: email,
+                  password: password,
+                ),
           ),
         );
       } else {
@@ -82,9 +83,9 @@ class _SignUpState extends State<SignUp> {
         _isSubmitting = false; // Ensure button is re-enabled on error
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
     }
   }
 
@@ -123,17 +124,19 @@ class _SignUpState extends State<SignUp> {
                         Text(
                           'Get Started',
                           style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: screenWidth * 0.08,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold),
+                            fontFamily: 'Poppins',
+                            fontSize: screenWidth * 0.08,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           'Create an account to continue!',
                           style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: screenWidth * 0.04,
-                              color: Colors.white),
+                            fontFamily: 'Poppins',
+                            fontSize: screenWidth * 0.04,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -199,8 +202,10 @@ class _SignUpState extends State<SignUp> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return 'Please enter a valid email address';
+                      if (!RegExp(
+                        r'^[^@]+@lhr\.nu\.edu\.pk$',
+                      ).hasMatch(value)) {
+                        return 'Please enter a valid FAST-NU Lahore email address';
                       }
                       isValidEmail = true;
                       return null;
@@ -294,81 +299,88 @@ class _SignUpState extends State<SignUp> {
                 SizedBox(height: screenHeight * 0.02),
                 // adding the sign up button
                 GestureDetector(
-                  onTap: _isSubmitting
-                      ? null // Disable onTap when submitting
-                      : () {
-                          setState(() {
-                            _validateGender = true;
-                          });
-                          if (_formKey.currentState!.validate()) {
-                            if (isValidUsername &&
-                                isValidEmail &&
-                                isValidPhone &&
-                                isValidPassword &&
-                                isValidConfirmPassword &&
-                                selectedGender.isNotEmpty) {
-                              registerUser(
-                                username: usernameController.text,
-                                email: emailController.text,
-                                gender: selectedGender,
-                                phone: phoneController.text,
-                                password: passwordController.text,
-                              );
+                  onTap:
+                      _isSubmitting
+                          ? null // Disable onTap when submitting
+                          : () {
+                            setState(() {
+                              _validateGender = true;
+                            });
+                            if (_formKey.currentState!.validate()) {
+                              if (isValidUsername &&
+                                  isValidEmail &&
+                                  isValidPhone &&
+                                  isValidPassword &&
+                                  isValidConfirmPassword &&
+                                  selectedGender.isNotEmpty) {
+                                registerUser(
+                                  username: usernameController.text,
+                                  email: emailController.text,
+                                  gender: selectedGender,
+                                  phone: phoneController.text,
+                                  password: passwordController.text,
+                                );
+                              }
                             }
-                          }
-                        },
+                          },
                   child: Container(
                     height: screenHeight * 0.06,
-                    margin:
-                        EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
-                    padding:
-                        EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+                    margin: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.05,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.05,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: _isSubmitting
-                            ? [
-                                Colors.grey.shade400,
-                                Colors.grey.shade600
-                              ] // Disabled gradient
-                            : AppColors.buttonColor, // Normal gradient
-                        stops: _isSubmitting
-                            ? [0.0, 1.0] // Stops for disabled gradient
-                            : AppColors.gradientStops, // Normal gradient stops
+                        colors:
+                            _isSubmitting
+                                ? [
+                                  Colors.grey.shade400,
+                                  Colors.grey.shade600,
+                                ] // Disabled gradient
+                                : AppColors.buttonColor, // Normal gradient
+                        stops:
+                            _isSubmitting
+                                ? [0.0, 1.0] // Stops for disabled gradient
+                                : AppColors
+                                    .gradientStops, // Normal gradient stops
                       ),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: _isSubmitting
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                      child:
+                          _isSubmitting
+                              ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 10),
-                                Text(
-                                  "Signing Up...",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: screenWidth * 0.045,
-                                    fontFamily: 'Poppins',
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Signing Up...",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: screenWidth * 0.045,
+                                      fontFamily: 'Poppins',
+                                    ),
                                   ),
+                                ],
+                              )
+                              : Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: screenWidth * 0.045,
+                                  fontFamily: 'Poppins',
                                 ),
-                              ],
-                            )
-                          : Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: screenWidth * 0.045,
-                                fontFamily: 'Poppins',
                               ),
-                            ),
                     ),
                   ),
                 ),
@@ -380,27 +392,29 @@ class _SignUpState extends State<SignUp> {
                     children: [
                       // Left Divider
                       Expanded(
-                          child: Container(
-                        height: 2,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.transparent, Color(0xA4A4A4A4)],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
+                        child: Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.transparent, Color(0xA4A4A4A4)],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                          margin: EdgeInsets.only(
+                            left: screenWidth * 0.05,
+                            right: screenWidth * 0.025,
                           ),
                         ),
-                        margin: EdgeInsets.only(
-                          left: screenWidth * 0.05,
-                          right: screenWidth * 0.025,
-                        ),
-                      )),
+                      ),
                       // Text
                       RichText(
                         text: TextSpan(
                           text: "Already have an account? ",
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.04),
+                            color: Colors.white,
+                            fontSize: screenWidth * 0.04,
+                          ),
                           children: [
                             TextSpan(
                               text: "Sign-in",
@@ -408,36 +422,39 @@ class _SignUpState extends State<SignUp> {
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  print("Sign-in");
-                                  //routing to signin
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => Login()),
-                                  );
-                                },
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () {
+                                      print("Sign-in");
+                                      //routing to signin
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => Login(),
+                                        ),
+                                      );
+                                    },
                             ),
                           ],
                         ),
                       ),
                       // Right Divider
                       Expanded(
-                          child: Container(
-                        height: 2,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xA4A4A4A4), Colors.transparent],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
+                        child: Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xA4A4A4A4), Colors.transparent],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                          margin: EdgeInsets.only(
+                            left: screenWidth * 0.025,
+                            right: screenWidth * 0.05,
                           ),
                         ),
-                        margin: EdgeInsets.only(
-                          left: screenWidth * 0.025,
-                          right: screenWidth * 0.05,
-                        ),
-                      )),
+                      ),
                     ],
                   ),
                 ),
