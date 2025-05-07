@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:fastpool_fe/components/DriverNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Vehicle {
+  int id; // Add ID field
   String name;
   String type;
   String regNumber;
@@ -10,6 +16,7 @@ class Vehicle {
   bool hasAC;
 
   Vehicle({
+    required this.id,
     required this.name,
     required this.type,
     required this.regNumber,
@@ -20,12 +27,12 @@ class Vehicle {
 
 class VehicleCard extends StatelessWidget {
   final Vehicle vehicle;
-  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const VehicleCard({
     super.key,
     required this.vehicle,
-    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -36,55 +43,119 @@ class VehicleCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      color: Colors.white.withOpacity(0.05), // glassy effect
+      color: const Color(0xFF282828), // Updated card color
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const Divider(color: Colors.white24, thickness: 1), // Divider added
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _vehicleRow("Name", vehicle.name),
-                const SizedBox(height: 8),
-                _vehicleRow("Type", vehicle.type),
-                const SizedBox(height: 8),
-                _vehicleRow("Reg #", vehicle.regNumber),
-                const SizedBox(height: 8),
-                _vehicleRow("Capacity", vehicle.capacity.toString()),
-                const SizedBox(height: 8),
-                _vehicleRow("A.C", vehicle.hasAC ? "Yes" : "No"),
+                Text(
+                  vehicle.name,
+                  style: const TextStyle(
+                      color: AppColors.textColor,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: "Poppins"),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () async {
+                    final success = await _deleteVehicle(context, vehicle.id);
+                    if (success) {
+                      onDelete();
+                    }
+                  },
+                ),
               ],
             ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white70),
-                onPressed: onEdit,
-              ),
-            ),
+            const Divider(color: Colors.white24, thickness: 1), // Divider added
+            _vehicleRow("Type", vehicle.type),
+            const SizedBox(height: 8),
+            _vehicleRow("Reg #", vehicle.regNumber),
+            const SizedBox(height: 8),
+            _vehicleRow("Capacity", vehicle.capacity.toString()),
+            const SizedBox(height: 8),
+            _vehicleRow("A.C", vehicle.hasAC ? "Yes" : "No"),
+            const Divider(color: Colors.white24, thickness: 1), // Divider added
           ],
         ),
       ),
     );
   }
 
+  Future<bool> _deleteVehicle(BuildContext context, int vehicleId) async {
+    final token = AuthContext.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication token is missing.')),
+      );
+      return false;
+    }
+
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    if (baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('BASE_URL is not defined in the .env file.')),
+      );
+      return false;
+    }
+    print(token);
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/drivers/vehicles/delete/'),
+        body: jsonEncode({'id': vehicleId}),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Remove vehicle from cached vehicles
+        final cachedVehicles = AuthContext.getCachedVehicleInfo();
+        if (cachedVehicles != null) {
+          final updatedVehicles =
+              cachedVehicles.where((v) => v['id'] != vehicleId).toList();
+          await AuthContext.cacheVehicleInfo(updatedVehicles);
+        }
+        return true;
+      } else {
+        final error = json.decode(response.body)['error'] ?? 'Unknown error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete vehicle: $error')),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+      return false;
+    }
+  }
+
   Widget _vehicleRow(String label, String value) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(_getIcon(label), size: 18, color: Colors.white60),
-        const SizedBox(width: 10),
-        Text(
-          label,
-          style: const TextStyle(
-              color: Colors.white70, fontWeight: FontWeight.w500),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+                color: Colors.white70,
+                fontWeight: FontWeight.w500,
+                fontFamily: "Poppins"),
+          ),
         ),
-        const Spacer(),
         Text(
           value,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+              color: AppColors.textColor,
+              fontWeight: FontWeight.w600,
+              fontFamily: "Poppins"),
+          textAlign: TextAlign.right, // Right-align the data
         ),
       ],
     );
@@ -109,8 +180,7 @@ class VehicleCard extends StatelessWidget {
 }
 
 class Driver {
-  String firstName;
-  String lastName;
+  String username; // Replace firstName and lastName with username
   String password;
   String phone;
   String email;
@@ -121,8 +191,7 @@ class Driver {
   Vehicle vehicle;
 
   Driver({
-    required this.firstName,
-    required this.lastName,
+    required this.username,
     required this.password,
     required this.phone,
     required this.email,
@@ -142,9 +211,10 @@ class DriverProfile extends StatefulWidget {
 }
 
 class _DriverProfileState extends State<DriverProfile> {
+  bool isLoading = true;
+
   final Driver driver = Driver(
-    firstName: "Shariq",
-    lastName: "Munir",
+    username: "Shariq Munir", // Update to use username
     password: "********",
     phone: "03123456789",
     email: "l226680@lhr.nu.edu.pk",
@@ -153,6 +223,7 @@ class _DriverProfileState extends State<DriverProfile> {
     rides: 1900,
     rating: 4.8,
     vehicle: Vehicle(
+      id: 1,
       name: "Honda City",
       type: "Car",
       regNumber: "ABC-123",
@@ -163,12 +234,14 @@ class _DriverProfileState extends State<DriverProfile> {
 
   List<Vehicle> vehicleList = [
     Vehicle(
+        id: 1,
         name: "Honda City",
         type: "Car",
         regNumber: "ABC-123",
         capacity: 4,
         hasAC: true),
     Vehicle(
+        id: 2,
         name: "Suzuki Alto",
         type: "Car",
         regNumber: "XYZ-789",
@@ -183,12 +256,11 @@ class _DriverProfileState extends State<DriverProfile> {
   @override
   void initState() {
     super.initState();
-
+    _fetchData();
     // Initialize driver
 
     // Create controllers
-    controllers["firstname"] = TextEditingController(text: driver.firstName);
-    controllers["lastName"] = TextEditingController(text: driver.lastName);
+    controllers["firstname"] = TextEditingController(text: driver.username);
     controllers["password"] = TextEditingController(text: driver.password);
     controllers["phone"] = TextEditingController(text: driver.phone);
     controllers["email"] = TextEditingController(text: driver.email);
@@ -200,6 +272,42 @@ class _DriverProfileState extends State<DriverProfile> {
     isEditing["phone"] = false;
     isEditing["email"] = false;
     isEditing["gender"] = false;
+  }
+
+  Future<void> _fetchData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // Simulate fetching data from local storage and AuthContext
+    final cachedVehicles = AuthContext.getCachedVehicleInfo();
+    final username = AuthContext.getUsername();
+    final email = AuthContext.getEmail();
+    final phone = AuthContext.getPhone();
+    final gender = AuthContext.getGender();
+    final ratings = AuthContext.getRatings();
+
+    await Future.delayed(const Duration(seconds: 2)); // Simulate delay
+
+    setState(() {
+      driver.username = username ?? "Unknown";
+      driver.email = email ?? "Unknown";
+      driver.phone = phone ?? "Unknown";
+      driver.gender = gender ?? "Unknown";
+      driver.rating = ratings ?? 0.0;
+      vehicleList = cachedVehicles
+              ?.map((v) => Vehicle(
+                    id: v['id'], // Include ID
+                    name: v['name'],
+                    type: v['type'],
+                    regNumber: v['registration_number'],
+                    capacity: v['capacity'],
+                    hasAC: v['AC'],
+                  ))
+              .toList() ??
+          [];
+      isLoading = false;
+    });
   }
 
   @override
@@ -217,8 +325,7 @@ class _DriverProfileState extends State<DriverProfile> {
   }
 
   void _showEditNameDialog(BuildContext context) {
-    final firstNameController = TextEditingController(text: driver.firstName);
-    final lastNameController = TextEditingController(text: driver.lastName);
+    final usernameController = TextEditingController(text: driver.username);
 
     showDialog(
       context: context,
@@ -234,49 +341,25 @@ class _DriverProfileState extends State<DriverProfile> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('First Name',
-                              style: TextStyle(color: Colors.white)),
-                          const SizedBox(height: 5),
-                          TextField(
-                            controller: firstNameController,
-                            style: const TextStyle(color: AppColors.textColor),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.grey[850],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Last Name',
-                              style: TextStyle(color: Colors.white)),
-                          const SizedBox(height: 5),
-                          TextField(
-                            controller: lastNameController,
-                            style: const TextStyle(color: AppColors.textColor),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.grey[850],
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ],
+                    const Text('Username',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                        )),
+                    const SizedBox(height: 5),
+                    TextField(
+                      controller: usernameController,
+                      style: const TextStyle(
+                          color: AppColors.textColor, fontFamily: 'Poppins'),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.grey[850],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ],
@@ -304,12 +387,26 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            driver.firstName = firstNameController.text;
-                            driver.lastName = lastNameController.text;
-                          });
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          final newUsername = usernameController.text;
+                          if (newUsername.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Username cannot be empty.')),
+                            );
+                            return;
+                          }
+
+                          final success =
+                              await _updateUsername(context, newUsername);
+                          if (success) {
+                            setState(() {
+                              driver.username = newUsername;
+                            });
+                            await AuthContext.setUsername(
+                                newUsername); // Use setter
+                            Navigator.pop(context);
+                          }
                         },
                         child: const Text(
                           "Confirm",
@@ -327,8 +424,53 @@ class _DriverProfileState extends State<DriverProfile> {
     );
   }
 
+  Future<bool> _updateUsername(BuildContext context, String newUsername) async {
+    final token = AuthContext.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication token is missing.')),
+      );
+      return false;
+    }
+
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    if (baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('BASE_URL is not defined in the .env file.')),
+      );
+      return false;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/profile/edit/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'username': newUsername}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        final error = json.decode(response.body)['error'] ?? 'Unknown error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update username: $error')),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+      return false;
+    }
+  }
+
   void _showEditPasswordDialog(BuildContext context) {
-    final passwordController = TextEditingController(text: driver.password);
+    final passwordController = TextEditingController(text: "");
     final confirmPasswordController = TextEditingController();
     bool isPasswordVisible = false;
     bool isConfirmPasswordVisible = false;
@@ -360,7 +502,8 @@ class _DriverProfileState extends State<DriverProfile> {
                         TextField(
                           controller: passwordController,
                           obscureText: !isPasswordVisible,
-                          style: const TextStyle(color: Colors.grey),
+                          style: const TextStyle(
+                              color: Colors.grey, fontFamily: 'Poppins'),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.grey[850],
@@ -396,7 +539,8 @@ class _DriverProfileState extends State<DriverProfile> {
                         TextField(
                           controller: confirmPasswordController,
                           obscureText: !isConfirmPasswordVisible,
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(
+                              color: Colors.white, fontFamily: 'Poppins'),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.grey[850],
@@ -502,7 +646,8 @@ class _DriverProfileState extends State<DriverProfile> {
                           const SizedBox(height: 5),
                           TextField(
                             controller: phoneController,
-                            style: const TextStyle(color: Colors.grey),
+                            style: const TextStyle(
+                                color: Colors.grey, fontFamily: 'Poppins'),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey[850],
@@ -539,11 +684,26 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blueAccent,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            driver.phone = phoneController.text;
-                          });
-                          Navigator.pop(context);
+                        onPressed: () async {
+                          final newPhone = phoneController.text;
+                          if (newPhone.length != 11) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'Phone number must be exactly 11 digits.')),
+                            );
+                            return;
+                          }
+
+                          final success =
+                              await _updatePhoneNumber(context, newPhone);
+                          if (success) {
+                            setState(() {
+                              driver.phone = newPhone;
+                            });
+                            await AuthContext.setPhone(newPhone); // Use setter
+                            Navigator.pop(context);
+                          }
                         },
                         child: const Text(
                           "Confirm",
@@ -561,13 +721,60 @@ class _DriverProfileState extends State<DriverProfile> {
     );
   }
 
-  void _showVehicleInfoDialog(BuildContext context, int index) {
-    final vehicle = vehicleList[index];
-    final nameController = TextEditingController(text: vehicle.name);
-    final regController = TextEditingController(text: vehicle.regNumber);
-    String selectedType = vehicle.type;
-    String selectedAC = vehicle.hasAC ? 'AC' : 'Non-AC';
-    int capacity = vehicle.capacity;
+  Future<bool> _updatePhoneNumber(BuildContext context, String newPhone) async {
+    final token = AuthContext.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication token is missing.')),
+      );
+      return false;
+    }
+
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    if (baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('BASE_URL is not defined in the .env file.')),
+      );
+      return false;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/profile/edit/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'phone': newPhone}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        final error = json.decode(response.body)['error'] ?? 'Unknown error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update phone number: $error')),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+      return false;
+    }
+  }
+
+  void _showVehicleInfoDialog(BuildContext context, {int? index}) {
+    final nameController = TextEditingController(
+        text: index != null ? vehicleList[index].name : "");
+    final regController = TextEditingController(
+        text: index != null ? vehicleList[index].regNumber : "");
+    String selectedType = index != null ? vehicleList[index].type : "Car";
+    String selectedAC =
+        index != null && vehicleList[index].hasAC ? 'AC' : 'Non-AC';
+    int capacity = index != null ? vehicleList[index].capacity : 4;
 
     showDialog(
       context: context,
@@ -592,7 +799,8 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white), // Match text color
+                            color: Colors.white,
+                            fontFamily: "Poppins"), // Match text color
                       ),
                       const SizedBox(height: 20),
                       const Text(
@@ -600,13 +808,16 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white), // Match text color
+                            color: Colors.white,
+                            fontFamily: "Poppins"), // Match text color
                       ),
                       const SizedBox(height: 5),
                       TextField(
                         controller: nameController,
                         style: const TextStyle(
-                            color: Colors.grey), // Updated inside text to grey
+                            color: Colors.grey,
+                            fontFamily:
+                                'Poppins'), // Updated inside text to grey
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey[850], // Match fill color
@@ -621,13 +832,15 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white), // Match text color
+                            color: Colors.white,
+                            fontFamily: "Poppins"), // Match text color
                       ),
                       const SizedBox(height: 5),
                       TextField(
                         controller: regController,
                         style: const TextStyle(
-                            color: AppColors.textColor), // Match text color
+                            color: AppColors.textColor,
+                            fontFamily: 'Poppins'), // Match text color
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: Colors.grey[850], // Match fill color
@@ -642,7 +855,8 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white), // Match text color
+                            color: Colors.white,
+                            fontFamily: "Poppins"), // Match text color
                       ),
                       const SizedBox(height: 5),
                       Row(
@@ -684,7 +898,8 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white), // Match text color
+                            color: Colors.white,
+                            fontFamily: "Poppins"), // Match text color
                       ),
                       const SizedBox(height: 5),
                       Row(
@@ -718,7 +933,8 @@ class _DriverProfileState extends State<DriverProfile> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white), // Match text color
+                            color: Colors.white,
+                            fontFamily: "Poppins"), // Match text color
                       ),
                       const SizedBox(height: 5),
                       Row(
@@ -779,18 +995,30 @@ class _DriverProfileState extends State<DriverProfile> {
                                 backgroundColor:
                                     Colors.blue, // Match button color
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  vehicleList[index] = Vehicle(
-                                    name: nameController.text,
-                                    type: selectedType,
-                                    regNumber: regController.text,
-                                    capacity: capacity,
-                                    hasAC: selectedAC == 'AC',
+                              onPressed: () async {
+                                if (nameController.text.isEmpty ||
+                                    regController.text.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Please fill all fields before submitting.')),
                                   );
-                                });
-                                this.setState(() {}); // Refresh the page
-                                Navigator.pop(context);
+                                  return;
+                                }
+
+                                final success = await _registerVehicle(
+                                  context,
+                                  nameController.text,
+                                  regController.text,
+                                  selectedType,
+                                  capacity,
+                                  selectedAC == 'AC',
+                                );
+
+                                if (success) {
+                                  Navigator.pop(context);
+                                  await _fetchData(); // Add this line to refresh the UI
+                                }
                               },
                               child: const Text(
                                 "Confirm",
@@ -813,468 +1041,451 @@ class _DriverProfileState extends State<DriverProfile> {
     );
   }
 
+  Future<bool> _registerVehicle(
+    BuildContext context,
+    String name,
+    String regNumber,
+    String type,
+    int capacity,
+    bool hasAC,
+  ) async {
+    final token = AuthContext.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication token is missing.')),
+      );
+      return false;
+    }
+
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    if (baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('BASE_URL is not defined in the .env file.')),
+      );
+      return false;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/drivers/vehicles/register/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'registration_number': regNumber,
+          'type': type,
+          'capacity': capacity,
+          'AC': hasAC,
+        }),
+      );
+      print('before if');
+      if (response.statusCode == 201) {
+        print(response.body.toString());
+        print('yahi');
+        final resp = json.decode(response.body);
+        final newVehicle = resp['data'];
+        print(newVehicle);
+
+        // Update the vehicle list in the UI
+        print(newVehicle);
+        setState(() {
+          vehicleList.add(Vehicle(
+            id: newVehicle['id'],
+            name: newVehicle['name'],
+            type: newVehicle['type'],
+            regNumber: newVehicle['registration_number'],
+            capacity: newVehicle['capacity'],
+            hasAC: newVehicle['AC'],
+          ));
+        });
+
+        // Update the cached vehicles
+        final cachedVehicles = AuthContext.getCachedVehicleInfo() ?? [];
+        cachedVehicles.add(newVehicle);
+        await AuthContext.cacheVehicleInfo(cachedVehicles);
+
+        return true;
+      } else {
+        final error = json.decode(response.body)['error'] ?? 'Unknown error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to register vehicle: $error')),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('An error occurred: $e')),
+      );
+      return false;
+    }
+  }
+
   void editVehicle(BuildContext context, int index) {
-    _showVehicleInfoDialog(context, index);
+    _showVehicleInfoDialog(context, index: index);
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.backgroundColor,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                // Profile Picture & Stats
-                Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 45,
-                      backgroundImage: AssetImage(driver.profileImage),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(driver.firstName + " " + driver.lastName,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 22)),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("${driver.rides} Rides",
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 14)),
-                        const SizedBox(width: 20),
-                        const Icon(Icons.star, color: Colors.amber, size: 16),
-                        const SizedBox(width: 4),
-                        Text("${driver.rating}",
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 14)),
-                      ],
-                    )
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Profile Info Card
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 8,
-                    margin: EdgeInsets.zero,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF3A3A3A),
-                            Color(0xFF1F1F1F),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            // Adjusted spacing to ensure uniformity between all fields
-                            Row(children: [
-                              Icon(
-                                Icons.person,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 12),
-                              Text("Name:",
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 45),
-                                  child: Text(
-                                      driver.firstName + " " + driver.lastName,
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 14)),
-                                ),
-                              ),
-                              IconButton(
-                                  onPressed: () => _showEditNameDialog(context),
-                                  icon: Icon(Icons.edit,
-                                      color: Colors.white38, size: 18)),
-                            ]),
-                            const SizedBox(height: 12),
-                            Row(children: [
-                              Icon(
-                                Icons.lock,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 12),
-                              Text("Password:",
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 20),
-                                  child: Text(driver.password,
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 14)),
-                                ),
-                              ),
-                              IconButton(
-                                  onPressed: () =>
-                                      _showEditPasswordDialog(context),
-                                  icon: Icon(Icons.edit,
-                                      color: Colors.white38, size: 18)),
-                            ]),
-                            const SizedBox(height: 12),
-                            Row(children: [
-                              Icon(
-                                Icons.phone,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 12),
-                              Text("Phone:",
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 41),
-                                  child: Text(driver.phone,
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 14)),
-                                ),
-                              ),
-                              IconButton(
-                                  onPressed: () =>
-                                      _showEditPhoneDialog(context),
-                                  icon: Icon(Icons.edit,
-                                      color: Colors.white38, size: 18)),
-                            ]),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.mail,
+      backgroundColor: AppColors.backgroundColor,
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Colors.blueAccent,
+              ),
+            )
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await _fetchData(); // Re-fetch data when pulled down
+                },
+                child: SingleChildScrollView(
+                  physics:
+                      const AlwaysScrollableScrollPhysics(), // Ensure pull-to-refresh works
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      // Profile Picture & Stats
+                      Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 45,
+                            backgroundImage: AssetImage(driver.profileImage),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(driver.username, // Update to use username
+                              style: const TextStyle(
                                   color: Colors.white,
-                                ),
-                                const SizedBox(width: 12),
-                                Text("Email:",
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 47),
-                                    child: Text(driver.email,
+                                  fontSize: 22,
+                                  fontFamily: "Poppins")),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("${driver.rides} Rides",
+                                  style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                      fontFamily: "Poppins")),
+                              const SizedBox(width: 20),
+                              const Icon(Icons.star,
+                                  color: Colors.amber, size: 16),
+                              const SizedBox(width: 4),
+                              Text("${driver.rating}",
+                                  style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                      fontFamily: "Poppins")),
+                            ],
+                          )
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Profile Info Card
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 8,
+                          margin: EdgeInsets.zero,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color:
+                                  Color(0xFF282828), // Updated to solid color
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(16)),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                children: [
+                                  // Adjusted spacing to ensure uniformity between all fields
+                                  Row(children: [
+                                    Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text("Username:",
                                         style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14)),
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: "Poppins")),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 45),
+                                        child: Text(driver.username,
+                                            style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 14,
+                                                fontFamily: "Poppins")),
+                                      ),
+                                    ),
+                                    IconButton(
+                                        onPressed: () =>
+                                            _showEditNameDialog(context),
+                                        icon: Icon(Icons.edit,
+                                            color: Colors.white38, size: 18)),
+                                  ]),
+                                  const SizedBox(height: 12),
+                                  Row(children: [
+                                    Icon(
+                                      Icons.lock,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text("Password:",
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: "Poppins")),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 20),
+                                        child: Text(driver.password,
+                                            style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 14,
+                                                fontFamily: "Poppins")),
+                                      ),
+                                    ),
+                                    IconButton(
+                                        onPressed: () =>
+                                            _showEditPasswordDialog(context),
+                                        icon: Icon(Icons.edit,
+                                            color: Colors.white38, size: 18)),
+                                  ]),
+                                  const SizedBox(height: 12),
+                                  Row(children: [
+                                    Icon(
+                                      Icons.phone,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text("Phone:",
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: "Poppins")),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 41),
+                                        child: Text(driver.phone,
+                                            style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 14,
+                                                fontFamily: "Poppins")),
+                                      ),
+                                    ),
+                                    IconButton(
+                                        onPressed: () =>
+                                            _showEditPhoneDialog(context),
+                                        icon: Icon(Icons.edit,
+                                            color: Colors.white38, size: 18)),
+                                  ]),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.mail,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text("Email:",
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: "Poppins")),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 47),
+                                          child: Text(driver.email,
+                                              style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 14,
+                                                  fontFamily: "Poppins")),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Row(children: [
+                                    Icon(
+                                      driver.gender.toLowerCase() == "male"
+                                          ? Icons.male
+                                          : Icons.female,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text("Gender:",
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: "Poppins")),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 38),
+                                        child: Text(driver.gender,
+                                            style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 14,
+                                                fontFamily: "Poppins")),
+                                      ),
+                                    ),
+                                  ]),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Divider between Profile Info and Vehicle Info
+                      const Divider(
+                        color: Colors.white24,
+                        thickness: 1,
+                        indent: 16,
+                        endIndent: 16,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Vehicle Info Card
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              "Vehicles Info",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontFamily: "Poppins"),
+                            ),
+                          ),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: vehicleList.length,
+                            itemBuilder: (context, index) {
+                              final vehicle = vehicleList[index];
+                              return VehicleCard(
+                                vehicle: vehicle,
+                                onDelete: () {
+                                  setState(() {
+                                    vehicleList.removeAt(index);
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Column(
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _showVehicleInfoDialog(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14), // Consistent padding
+                                    minimumSize: const Size(200,
+                                        50), // Consistent size for all buttons
+                                    backgroundColor: Colors.blueAccent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "Add Vehicle",
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontFamily: "Poppins"),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    await AuthContext.logout(context);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14), // Consistent padding
+                                    minimumSize: const Size(200,
+                                        50), // Consistent size for all buttons
+                                    backgroundColor: Colors.blueAccent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Logout',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        fontFamily: "Poppins"),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Add delete account functionality here
+                                    print('Delete Account button clicked');
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14), // Consistent padding
+                                    minimumSize: const Size(200,
+                                        50), // Consistent size for all buttons
+                                    backgroundColor: Colors
+                                        .red, // Red color for delete button
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Delete Account',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        fontFamily: "Poppins"),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            Row(children: [
-                              Icon(
-                                driver.gender.toLowerCase() == "male"
-                                    ? Icons.male
-                                    : Icons.female,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 12),
-                              Text("Gender:",
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 38),
-                                  child: Text(driver.gender,
-                                      style: const TextStyle(
-                                          color: Colors.white70, fontSize: 14)),
-                                ),
-                              ),
-                            ]),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Divider between Profile Info and Vehicle Info
-                const Divider(
-                  color: Colors.white24,
-                  thickness: 1,
-                  indent: 16,
-                  endIndent: 16,
-                ),
-
-                const SizedBox(height: 16),
-
-                // Vehicle Info Card
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        "Vehicles Info",
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: vehicleList.length,
-                      itemBuilder: (context, index) {
-                        final vehicle = vehicleList[index];
-                        return StatefulBuilder(
-                          builder: (context, setState) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                              child: Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 8,
-                                margin: EdgeInsets.zero,
-                                child: Container(
-                                  decoration: const BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFF3A3A3A),
-                                        Color(0xFF1F1F1F),
-                                      ],
-                                    ),
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(16)),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      children: [
-                                        // Adjusted spacing to ensure uniformity between all fields
-                                        Row(children: [
-                                          Text("Name:",
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 80),
-                                              child: Text(vehicle.name,
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 14)),
-                                            ),
-                                          ),
-                                          IconButton(
-                                              onPressed: () =>
-                                                  _showVehicleInfoDialog(
-                                                      context, index),
-                                              icon: Icon(Icons.edit,
-                                                  color: Colors.white38,
-                                                  size: 18)),
-                                        ]),
-                                        const SizedBox(height: 12),
-                                        Row(children: [
-                                          Text("Type:",
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 87),
-                                              child: Text(vehicle.type,
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 14)),
-                                            ),
-                                          ),
-                                        ]),
-                                        const SizedBox(height: 12),
-                                        Row(children: [
-                                          Text("Reg #:",
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 81),
-                                              child: Text(vehicle.regNumber,
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 14)),
-                                            ),
-                                          ),
-                                        ]),
-                                        const SizedBox(height: 16),
-                                        Row(
-                                          children: [
-                                            Text("Capacity:",
-                                                style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight:
-                                                        FontWeight.bold)),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 63),
-                                                child: Text(
-                                                    vehicle.capacity.toString(),
-                                                    style: const TextStyle(
-                                                        color: Colors.white70,
-                                                        fontSize: 14)),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 20),
-                                        Row(children: [
-                                          Text("A.C:",
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold)),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 95),
-                                              child: Text(
-                                                  vehicle.hasAC ? "Yes" : "No",
-                                                  style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 14)),
-                                            ),
-                                          ),
-                                        ]),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    Center(
-                      child: Column(
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                vehicleList.add(Vehicle(
-                                  name: "New Vehicle",
-                                  type: "Car",
-                                  regNumber: "NEW-123",
-                                  capacity: 4,
-                                  hasAC: false,
-                                ));
-                              });
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14), // Consistent padding
-                              minimumSize: const Size(
-                                  200, 50), // Consistent size for all buttons
-                              backgroundColor: Colors.blueAccent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              "Add Vehicle",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 16),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () {
-                              // Add logout functionality here
-                              print('Logout button clicked');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14), // Consistent padding
-                              minimumSize: const Size(
-                                  200, 50), // Consistent size for all buttons
-                              backgroundColor: Colors.blueAccent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Logout',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            onPressed: () {
-                              // Add delete account functionality here
-                              print('Delete Account button clicked');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 14), // Consistent padding
-                              minimumSize: const Size(
-                                  200, 50), // Consistent size for all buttons
-                              backgroundColor:
-                                  Colors.red, // Red color for delete button
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text(
-                              'Delete Account',
-                              style:
-                                  TextStyle(fontSize: 16, color: Colors.white),
-                            ),
                           ),
                         ],
-                      ),
-                    ),
-                  ],
-                )
-              ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-
-        // Bottom Navigation Bar
-        bottomNavigationBar: DriverNavbar(initial_index: 4));
+      bottomNavigationBar: DriverNavbar(initialIndex: 4),
+    );
   }
 
   String capitalize(String input) =>

@@ -40,6 +40,7 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      fontFamily: "Poppins",
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -144,7 +145,8 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                                 const Text(
                                                   'Pickup',
                                                   style: TextStyle(
-                                                      color: Colors.white),
+                                                      color: Colors.white,
+                                                      fontFamily: "Poppins"),
                                                 ),
                                               ],
                                             ),
@@ -159,7 +161,8 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                                 const Text(
                                                   'Destination',
                                                   style: TextStyle(
-                                                      color: Colors.white),
+                                                      color: Colors.white,
+                                                      fontFamily: "Poppins"),
                                                 ),
                                               ],
                                             ),
@@ -168,7 +171,8 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                               'Rs 100',
                                               style: TextStyle(
                                                   color: Colors.white,
-                                                  fontWeight: FontWeight.bold),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: "Poppins"),
                                             ),
                                           ],
                                         ),
@@ -191,7 +195,8 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                               'Time',
                                               style: TextStyle(
                                                   color: Colors.white,
-                                                  fontWeight: FontWeight.bold),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: "Poppins"),
                                             ),
                                           ],
                                         ),
@@ -232,7 +237,8 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
-                                  fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: "Poppins"),
                               textAlign: TextAlign.center,
                             ),
                             const Divider(color: Colors.grey),
@@ -240,13 +246,17 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
 
                             // Vehicle Type
                             const Text('Type',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: "Poppins")),
                             const SizedBox(height: 8),
                             Row(
                               children: [
                                 const Spacer(),
                                 const Text('Car',
-                                    style: TextStyle(color: Colors.white)),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: "Poppins")),
                                 const SizedBox(width: 8),
                                 Switch(
                                   value: vehicleType == 'Car',
@@ -260,7 +270,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Bike',
-                                    style: TextStyle(color: Colors.white)),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: "Poppins")),
                                 const Spacer(),
                               ],
                             ),
@@ -268,7 +280,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                             // Capacity
                             const SizedBox(height: 16),
                             const Text('Capacity',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: "Poppins")),
                             const SizedBox(height: 8),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -288,7 +302,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                 Text(
                                   '$capacity',
                                   style: const TextStyle(
-                                      color: Colors.white, fontSize: 18),
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontFamily: "Poppins"),
                                 ),
                                 const SizedBox(width: 16),
                                 IconButton(
@@ -306,13 +322,17 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                             // AC
                             const SizedBox(height: 16),
                             const Text('AC',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: "Poppins")),
                             const SizedBox(height: 8),
                             Row(
                               children: [
                                 const Spacer(),
                                 const Text('Yes',
-                                    style: TextStyle(color: Colors.white)),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: "Poppins")),
                                 const SizedBox(width: 8),
                                 Switch(
                                   value: ac == 'Yes',
@@ -326,7 +346,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('No',
-                                    style: TextStyle(color: Colors.white)),
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: "Poppins")),
                                 const Spacer(),
                               ],
                             ),
@@ -334,7 +356,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                             // Amount
                             const SizedBox(height: 16),
                             const Text('Amount',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: "Poppins")),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -348,7 +372,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                     ),
                                     child: const Text(
                                       'Min',
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: "Poppins"),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -367,7 +393,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                     ),
                                     child: const Text(
                                       'Max',
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontFamily: "Poppins"),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -378,7 +406,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                             // Preferred Gender
                             const SizedBox(height: 16),
                             const Text('Preferred Gender',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: "Poppins")),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -402,7 +432,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'Male',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -429,7 +461,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'Female',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -456,7 +490,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'All',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -468,7 +504,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                             // Payment Option
                             const SizedBox(height: 16),
                             const Text('Payment Option',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontFamily: "Poppins")),
                             const SizedBox(height: 8),
                             Row(
                               children: [
@@ -488,7 +526,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'Cash',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -511,7 +551,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'Online',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -551,7 +593,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'Clear',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -575,7 +619,9 @@ class _RiderExplorePageState extends State<RiderExplorePage> {
                                       ),
                                       child: const Text(
                                         'OK',
-                                        style: TextStyle(color: Colors.white),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontFamily: "Poppins"),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),

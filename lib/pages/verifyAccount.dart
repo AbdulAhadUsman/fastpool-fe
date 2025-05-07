@@ -32,8 +32,20 @@ class verifyAccount extends StatefulWidget {
 class _verifyAccountState extends State<verifyAccount> {
   final _formKey = GlobalKey<FormState>();
   final otpController = TextEditingController();
+  bool _isVerifying = false; // Flag to track verification state
 
   void verify() async {
+    // Only proceed if not already verifying
+    if (_isVerifying) return;
+
+    // Validate form first
+    if (!_formKey.currentState!.validate()) return;
+
+    // Set verifying state to true
+    setState(() {
+      _isVerifying = true;
+    });
+
     try {
       final success = await AuthContext.verify(
         username: widget.username,
@@ -43,6 +55,11 @@ class _verifyAccountState extends State<verifyAccount> {
         password: widget.password,
         otp: otpController.text.toString(),
       );
+
+      // Set verifying state back to false
+      setState(() {
+        _isVerifying = false;
+      });
 
       if (success) {
         // Navigate to the login page on successful verification
@@ -61,6 +78,10 @@ class _verifyAccountState extends State<verifyAccount> {
       }
     } catch (e) {
       // Handle exceptions and show error message
+      setState(() {
+        _isVerifying = false; // Ensure button is re-enabled on error
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $e')),
       );
@@ -125,13 +146,19 @@ class _verifyAccountState extends State<verifyAccount> {
                         controller: otpController,
                         hintText: 'Code',
                         obscureText: false,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter the verification code';
+                          }
+                          return null;
+                        },
                       ),
                       SizedBox(height: screenHeight * 0.03),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () => verify(),
+                            onTap: _isVerifying ? null : () => verify(),
                             child: Container(
                               height: screenHeight * 0.06,
                               margin: EdgeInsets.symmetric(
@@ -140,23 +167,84 @@ class _verifyAccountState extends State<verifyAccount> {
                                   horizontal: screenWidth * 0.09),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                    colors: AppColors.buttonColor,
-                                    stops: AppColors.gradientStops),
+                                  colors: _isVerifying
+                                      ? [
+                                          Colors.grey.shade400,
+                                          Colors.grey.shade600
+                                        ] // Disabled gradient
+                                      : AppColors
+                                          .buttonColor, // Normal gradient
+                                  stops: _isVerifying
+                                      ? [
+                                          0.0,
+                                          1.0
+                                        ] // Stops for disabled gradient
+                                      : AppColors
+                                          .gradientStops, // Normal gradient stops
+                                ),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Center(
-                                child: Text(
-                                  "Verify",
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: screenWidth * 0.045,
-                                      fontFamily: 'Poppins'),
-                                ),
+                                child: _isVerifying
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text(
+                                            "Verifying...",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: screenWidth * 0.045,
+                                              fontFamily: 'Poppins',
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Text(
+                                        "Verify",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: screenWidth * 0.045,
+                                          fontFamily: 'Poppins',
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
                         ],
-                      )
+                      ),
+                      // Add resend code option
+                      SizedBox(height: screenHeight * 0.02),
+                      TextButton(
+                        onPressed: _isVerifying
+                            ? null
+                            : () {
+                                // Implement resend code functionality here
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'A new verification code has been sent to your email')),
+                                );
+                              },
+                        child: Text(
+                          "Resend Code",
+                          style: TextStyle(
+                            color: Colors.white,
+                            decoration: TextDecoration.underline,
+                            fontSize: screenWidth * 0.035,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ))));

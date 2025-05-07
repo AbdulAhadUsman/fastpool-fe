@@ -5,6 +5,12 @@ import 'package:http/http.dart' as http;
 final String googleMapsApiKey = GoogleMapsApiKey;
 
 Future<String> getAddressFromLatLng(double lat, double lng) async {
+
+
+  final url =
+      'https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$googleMapsApiKey';
+
+
   try {
     final response = await http
         .get(

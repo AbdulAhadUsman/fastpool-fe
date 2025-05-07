@@ -77,6 +77,8 @@ class _MyTextFieldState extends State<MyTextField> {
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: AppColors.focusedBorderColor),
               ),
+              fillColor: Color(0xFF282828), // Updated background color
+              filled: true, // Enable the fill color
               prefixIcon: widget.hasPrefixIcon ? widget.prefixIcon : null,
               suffixIcon: widget.hasSuffixIconButton
                   ? IconButton(

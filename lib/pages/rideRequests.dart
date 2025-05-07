@@ -1,7 +1,7 @@
 import 'package:fastpool_fe/context/AuthContext.dart';
+import 'package:fastpool_fe/helper-functions/reverseGeoLoc.dart';
 import 'package:flutter/material.dart';
 import 'package:fastpool_fe/components/colors.dart';
-import 'package:fastpool_fe/components/DriverNavBar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -26,30 +26,30 @@ class Rider {
 
 class Request {
   final int id;
-  final int rideId; // Added ride_id attribute
   final String pickup;
-  final String pickupTime;
+  final String pickupTime; // Added pickupTime attribute
   String status;
   final Rider rider;
 
   Request({
     required this.id,
-    required this.rideId, // Added ride_id to constructor
     required this.pickup,
-    required this.pickupTime,
+    required this.pickupTime, // Added pickupTime to constructor
     required this.status,
     required this.rider,
   });
 }
 
-class DriverRideRequests extends StatefulWidget {
-  const DriverRideRequests({Key? key}) : super(key: key);
+class RideRequestsPage extends StatefulWidget {
+  final int rideId;
+
+  const RideRequestsPage({Key? key, required this.rideId}) : super(key: key);
 
   @override
-  State<DriverRideRequests> createState() => _DriverRideRequestsState();
+  State<RideRequestsPage> createState() => _RideRequestsPageState();
 }
 
-class _DriverRideRequestsState extends State<DriverRideRequests> {
+class _RideRequestsPageState extends State<RideRequestsPage> {
   bool isLoading = true;
   List<Request> requests = [];
 
@@ -80,7 +80,7 @@ class _DriverRideRequestsState extends State<DriverRideRequests> {
 
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/ride/requests/?role=driver'),
+        Uri.parse('$baseUrl/ride/requests?role=driver&id=${widget.rideId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -90,33 +90,42 @@ class _DriverRideRequestsState extends State<DriverRideRequests> {
 
         if (results.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No requests available.')),
+            const SnackBar(content: Text('No requests for this ride.')),
           );
         } else {
-          List<Request> tempRequests = [];
+          List<Request> tempRequests = []; // Prepare requests outside setState
           for (var req in results) {
             final riderData = req['rider'];
             final rider = Rider(
-              username: riderData['username'] ?? 'Unknown',
-              email: riderData['email'] ?? 'Unknown',
-              gender: riderData['gender'] ?? 'Unknown',
-              phone: riderData['phone'] ?? 'Unknown',
-              profilePic: riderData['profile_pic'] ?? '',
-              riderRating: (riderData['rider_rating'] ?? 0).toDouble(),
+              username:
+                  riderData['username'] ?? 'Unknown', // Default value for null
+              email: riderData['email'] ?? 'Unknown', // Default value for null
+              gender:
+                  riderData['gender'] ?? 'Unknown', // Default value for null
+              phone: riderData['phone'] ?? 'Unknown', // Default value for null
+              profilePic:
+                  riderData['profile_pic'] ?? '', // Default empty string
+              riderRating:
+                  (riderData['rider_rating'] ?? 0).toDouble(), // Default 0.0
+            );
+
+            final source = await getAddressFromLatLng(
+              req['pickup_lat'] ?? 0.0, // Default latitude
+              req['pickup_lng'] ?? 0.0, // Default longitude
             );
 
             tempRequests.add(Request(
-              id: req['id'] ?? 0,
-              rideId: req['ride'] ?? 0, // Added ride_id
-              pickup: req['pickup'] ?? 'Unknown',
-              pickupTime: req['pickup_time'] ?? 'Unknown',
-              status: req['status'] ?? 'Unknown',
+              id: req['id'] ?? 0, // Default ID
+              pickup: source,
+              pickupTime: req['pickup_time'] ?? 'Unknown', // Added pickupTime
+              status: req['status'] ?? 'Unknown', // Default value for null
               rider: rider,
             ));
+            print(tempRequests);
           }
 
           setState(() {
-            requests = tempRequests;
+            requests = tempRequests; // Update state after preparation
           });
         }
       } else {
@@ -135,6 +144,13 @@ class _DriverRideRequestsState extends State<DriverRideRequests> {
         isLoading = false;
       });
     }
+  }
+
+  void updateRequests(int requestId) {
+    setState(() {
+      requests.removeWhere(
+          (request) => request.id == requestId); // Remove the declined request
+    });
   }
 
   @override
@@ -159,16 +175,15 @@ class _DriverRideRequestsState extends State<DriverRideRequests> {
               child: CircularProgressIndicator(color: Colors.blue),
             )
           : RefreshIndicator(
-              onRefresh: fetchRequests, // Add pull-to-refresh functionality
+              onRefresh: fetchRequests,
               child: requests.isEmpty
                   ? const Center(
                       child: Text(
                         'No requests available',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: 'Poppins',
-                        ),
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontFamily: 'Poppins'),
                       ),
                     )
                   : ListView.builder(
@@ -176,19 +191,26 @@ class _DriverRideRequestsState extends State<DriverRideRequests> {
                       itemCount: requests.length,
                       itemBuilder: (context, index) {
                         final request = requests[index];
-                        return RideRequestCard(request: request);
+                        return RideRequestCard(
+                          request: request,
+                          onRequestUpdated: updateRequests, // Pass the callback
+                        );
                       },
                     ),
             ),
-      bottomNavigationBar: DriverNavbar(initialIndex: 3),
     );
   }
 }
 
 class RideRequestCard extends StatefulWidget {
   final Request request;
+  final Function onRequestUpdated; // Callback to update the parent list
 
-  const RideRequestCard({Key? key, required this.request}) : super(key: key);
+  const RideRequestCard({
+    Key? key,
+    required this.request,
+    required this.onRequestUpdated,
+  }) : super(key: key);
 
   @override
   State<RideRequestCard> createState() => _RideRequestCardState();
@@ -228,7 +250,7 @@ class _RideRequestCardState extends State<RideRequestCard> {
 
         setState(() {
           widget.request.status =
-              endpoint == 'accept' ? 'Accepted' : 'Declined'; // Update status
+              endpoint == 'accept' ? 'accepted' : 'declined'; // Update status
           isExpanded = false; // Shrink the card
         });
       } else {
@@ -297,7 +319,7 @@ class _RideRequestCardState extends State<RideRequestCard> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Pickup Time: ${widget.request.pickupTime}',
+                    'Pickup Time: ${widget.request.pickupTime}', // Display pickupTime
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,

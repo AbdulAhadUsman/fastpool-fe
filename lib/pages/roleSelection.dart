@@ -13,7 +13,7 @@ class RoleSelection extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           "Select Role",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontFamily: "Poppins"),
         ),
         backgroundColor: AppColors.backgroundColor,
         centerTitle: true,
@@ -28,12 +28,9 @@ class RoleSelection extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () async {
-                // Set the role as driver and navigate to DriverHomePage
+                // Set the role as driver and navigate based on role
                 await AuthContext.setRole('driver');
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => DriverHomePage()),
-                );
+                await AuthContext.navigateUserBasedOnRole(context);
               },
               style: ElevatedButton.styleFrom(
                 padding:
@@ -45,7 +42,8 @@ class RoleSelection extends StatelessWidget {
               ),
               child: const Text(
                 'Driver',
-                style: TextStyle(fontSize: 18, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 18, color: Colors.white, fontFamily: "Poppins"),
               ),
             ),
             const SizedBox(height: 20),
@@ -68,7 +66,8 @@ class RoleSelection extends StatelessWidget {
               ),
               child: const Text(
                 'Rider',
-                style: TextStyle(fontSize: 18, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 18, color: Colors.white, fontFamily: "Poppins"),
               ),
             ),
           ],

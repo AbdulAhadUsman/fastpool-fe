@@ -1,7 +1,11 @@
 import 'package:fastpool_fe/components/DriverNavBar.dart';
 import 'package:fastpool_fe/components/colors.dart';
+import 'package:fastpool_fe/helper-functions/reverseGeoLoc.dart';
 import 'package:flutter/material.dart';
-// import 'package:lucide_icons/lucide_icons.dart'; // Optional if you want matching icons
+import 'package:fastpool_fe/context/AuthContext.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class DriverHomePage extends StatefulWidget {
   const DriverHomePage({super.key});
@@ -11,123 +15,248 @@ class DriverHomePage extends StatefulWidget {
 }
 
 class _DriverHomePageState extends State<DriverHomePage> {
-  final String driverName = 'Shariq';
-  final String profilePicUrl = 'assets/images/Login.png';
-  final int last30DaysRides = 3;
-  final double myRating = 4.8;
+  String driverName = 'Loading...';
+  String email = 'Loading...';
+  String gender = 'Loading...';
+  String phone = 'Loading...';
 
-  final String source = 'DHA Phase 7';
-  final String destination = 'Fast NUCES Lahore';
-  final String time = '8:30 AM';
-  final String preferredGender = 'Male';
-  final String amount = '150';
-  final String paymentOption = 'Cash';
-  final String vehicleType = 'Car';
-  final String registrationNumber = 'ABC-123';
-  final int availableSeats = 4;
-  final String acStatus = 'Yes';
+  final String profilePicUrl = 'assets/images/Login.png';
+  int activeRides = 0;
+  double myRating = 0.0;
+
+  String? source = 'Loading...';
+  String? destination = 'Loading...';
+  String time = 'Loading...';
+  String preferredGender = 'Loading...';
+  int amount = 0;
+  String paymentOption = 'Loading...';
+  String vehicleType = 'Loading...';
+  String registrationNumber = 'Loading...';
+  int availableSeats = 0;
+  String acStatus = 'Loading...';
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    final token = AuthContext.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Authentication token is missing.')),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    final baseUrl = dotenv.env['BASE_URL'] ?? '';
+    if (baseUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('BASE_URL is not defined in the .env file.')),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/drivers/homepage/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final upcomingRide = data['upcoming_ride'];
+
+        if (upcomingRide != null) {
+          source = await getAddressFromLatLng(
+            upcomingRide['source_lat'],
+            upcomingRide['source_lng'],
+          );
+          destination = await getAddressFromLatLng(
+            upcomingRide['destination_lat'],
+            upcomingRide['destination_lng'],
+          );
+        }
+
+        setState(() {
+          driverName = AuthContext.getUsername() ?? 'Unknown';
+          activeRides = data['active_rides'] ?? 0;
+          myRating = AuthContext.getRatings() ?? 0.0;
+
+          if (upcomingRide != null) {
+            time = upcomingRide['time'] ?? 'Unknown';
+            preferredGender = upcomingRide['preferred_gender'] ?? 'Unknown';
+            amount = upcomingRide['amount'] ?? 0;
+            paymentOption = upcomingRide['payment_option'] ?? 'Unknown';
+            vehicleType = upcomingRide['vehicle']?['type'] ?? 'Unknown';
+            registrationNumber =
+                upcomingRide['vehicle']?['registration_number'] ?? 'Unknown';
+            availableSeats = upcomingRide['available_seats'] ?? 0;
+            acStatus = upcomingRide['vehicle']?["AC"] ?? true ? 'Yes' : 'No';
+          } else {
+            source = null;
+            destination = null;
+          }
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Failed to fetch data: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('An error occurred: $e')),
+      // );
+      print('An error occurred: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Header
-                Card(
-                  color: const Color(0xFF1E1E1E),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Colors.blueAccent,
+              ),
+            )
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _fetchData, // Refresh on pull-down
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundImage: AssetImage(profilePicUrl),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Welcome $driverName',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        // Welcome Header
+                        Card(
+                          color: const Color(0xFF1E1E1E),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundImage: AssetImage(profilePicUrl),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Welcome $driverName',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 24),
+
+                        // Stats Section
+                        const Text(
+                          'Stats',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                icon: Icons.directions_car,
+                                title: 'Active Rides',
+                                value: '$activeRides',
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: StatCard(
+                                icon: Icons.star,
+                                title: 'My Rating',
+                                value: '$myRating',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Upcoming Ride Section
+                        const Text(
+                          'Upcoming Ride',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        source == null || destination == null
+                            ? const Center(
+                                child: Text(
+                                  'No upcoming rides',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              )
+                            : UpcomingRideCard(
+                                source: source ?? 'Unknown',
+                                destination: destination ?? 'Unknown',
+                                time: time,
+                                preferredGender: preferredGender,
+                                amount: amount.toString(),
+                                paymentOption: paymentOption,
+                                vehicleType: vehicleType,
+                                registrationNumber: registrationNumber,
+                                availableSeats: availableSeats,
+                                acStatus: acStatus,
+                              ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Stats Section
-                const Text(
-                  'Stats',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatCard(
-                        icon: Icons.directions_car,
-                        title: 'Last 30 Days',
-                        value: '$last30DaysRides',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatCard(
-                        icon: Icons.star,
-                        title: 'My Rating',
-                        value: '$myRating',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Upcoming Ride Section
-                const Text(
-                  'Upcoming Ride',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                UpcomingRideCard(
-                  source: source,
-                  destination: destination,
-                  time: time,
-                  preferredGender: preferredGender,
-                  amount: amount,
-                  paymentOption: paymentOption,
-                  vehicleType: vehicleType,
-                  registrationNumber: registrationNumber,
-                  availableSeats: availableSeats,
-                  acStatus: acStatus,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
       // Bottom Navigation Bar
       bottomNavigationBar: DriverNavbar(
-        initial_index: 0,
+        initialIndex: 0,
       ),
     );
   }
@@ -158,7 +287,8 @@ class StatCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
+              style: const TextStyle(
+                  color: Colors.white70, fontSize: 14, fontFamily: 'Poppins'),
             ),
             const SizedBox(height: 4),
             Text(
@@ -166,7 +296,8 @@ class StatCard extends StatelessWidget {
               style: const TextStyle(
                   color: Colors.blueAccent,
                   fontSize: 20,
-                  fontWeight: FontWeight.bold),
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Poppins'),
             ),
           ],
         ),
@@ -233,8 +364,9 @@ class UpcomingRideCard extends StatelessWidget {
                   backgroundColor: Colors.blueAccent,
                 ),
                 child: const Text(
-                  'See Pending Requests',
-                  style: TextStyle(fontSize: 16),
+                  'Show Requests',
+                  style: TextStyle(
+                      fontSize: 16, color: Colors.white, fontFamily: 'Poppins'),
                 ),
               ),
             )
@@ -260,15 +392,26 @@ class RideInfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align items at the top
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          Expanded(
+            flex: 3,
+            child: Text(
+              label,
+              style: const TextStyle(
+                  color: Colors.white70, fontSize: 14, fontFamily: 'Poppins'),
+            ),
           ),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 7,
+            child: Text(
+              value,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 14, fontFamily: 'Poppins'),
+              overflow: TextOverflow.visible, // Allow text to wrap
+              softWrap: true,
+            ),
           ),
         ],
       ),
