@@ -50,9 +50,9 @@ class ApiClient {
         ...filters.map((key, value) => MapEntry(key, value.toString())),
     };
 
-    final uri = Uri.parse('$backendUrl/rides/search/').replace(
-      queryParameters: queryParams,
-    );
+    final uri = Uri.parse(
+      '$backendUrl/rides/search/',
+    ).replace(queryParameters: queryParams);
 
     final response = await http.get(uri, headers: _headers);
 
@@ -86,6 +86,26 @@ class ApiClient {
 
     if (response.statusCode != 204 && response.statusCode != 200) {
       throw Exception('Failed to cancel request: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchRiderHistory({String? cursor}) async {
+    final queryParams = <String, String>{
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+    };
+
+    final uri = Uri.parse(
+      '$backendUrl/riders/history/',
+    ).replace(queryParameters: queryParams);
+
+    final response = await http.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      print('History Response: $data'); // Debug log
+      return data;
+    } else {
+      throw Exception('Failed to fetch ride history: ${response.statusCode}');
     }
   }
 }
