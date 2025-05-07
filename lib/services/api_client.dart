@@ -113,4 +113,28 @@ class ApiClient {
       throw Exception('Failed to fetch ride history: ${response.statusCode}');
     }
   }
+
+  Future<Map<String, dynamic>> createRideRequest({
+    required int rideId,
+    required double pickupLat,
+    required double pickupLng,
+    required String pickupTime,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$backendUrl/rides/requests/'),
+      headers: _headers,
+      body: jsonEncode({
+        'ride': rideId,
+        'pickup_lat': pickupLat,
+        'pickup_lng': pickupLng,
+        'pickup_time': pickupTime,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to create ride request: ${response.statusCode}');
+    }
+  }
 }
