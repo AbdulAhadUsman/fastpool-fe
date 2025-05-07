@@ -3,21 +3,26 @@ import 'package:http/http.dart' as http;
 import 'package:fastpool_fe/constants/api.dart';
 import 'package:fastpool_fe/models/search_response.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:fastpool_fe/context/AuthContext.dart';
 
 class ApiClient {
   final String backendUrl;
-  final String accessToken;
 
   ApiClient({
     this.backendUrl =
         'http://10.0.2.2:8000', // Default URL for Android emulator
-    this.accessToken = access_token,
   });
 
-  Map<String, String> get _headers => {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      };
+  Map<String, String> get _headers {
+    final token = AuthContext.getToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+    return {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+  }
 
   Future<Map<String, dynamic>> fetchRiderHomepage() async {
     final response = await http.get(
