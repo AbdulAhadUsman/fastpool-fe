@@ -2,6 +2,7 @@ import 'package:fastpool_fe/components/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:fastpool_fe/context/AuthContext.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
 
 class RoleSelection extends StatelessWidget {
   const RoleSelection({super.key});
@@ -48,9 +49,12 @@ class RoleSelection extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                // Set the role as rider and navigate based on role
+                // Set the role as rider and navigate to RiderHomePage
                 await AuthContext.setRole('rider');
-                await AuthContext.navigateUserBasedOnRole(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => RiderHomePage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 padding:

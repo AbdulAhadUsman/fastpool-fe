@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fastpool_fe/pages/driverHome.dart';
+import 'package:fastpool_fe/pages/riderHome.dart';
 import 'package:fastpool_fe/pages/roleSelection.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -23,9 +24,8 @@ class AuthContext {
   static const _ratingsKey = 'ratings';
   static const _idkey = 'id';
 
-  static const _baseUrlKey = 'http://192.168.100.214:8000';
   static String get _baseUrl =>
-      dotenv.env['BASE_URL'] ?? 'http://192.168.100.214:8000';
+      dotenv.env['BASE_URL'] ?? 'http://192.168.43.254:8000';
 
   // Initialize Hive (call this once at app startup)
   static Future<void> init() async {
@@ -110,7 +110,7 @@ class AuthContext {
     if (role != null && token != null) {
       try {
         final response = await http.get(
-          Uri.parse('$_baseUrlKey/users/profile/?role=$role'),
+          Uri.parse('$_baseUrl/users/profile/?role=$role'),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -179,7 +179,7 @@ class AuthContext {
   static Future<bool> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrlKey/users/login/'),
+        Uri.parse('$_baseUrl/users/login/'),
         body: {'email': email, 'password': password},
       );
 
@@ -206,9 +206,9 @@ class AuthContext {
     try {
       print('in the try block of register function');
       print(email);
-      print(_baseUrlKey);
+      print(_baseUrl);
       final response = await http.post(
-        Uri.parse('$_baseUrlKey/users/signup/'),
+        Uri.parse('$_baseUrl/users/signup/'),
         body: {
           'email': email,
           'password': password,
@@ -248,7 +248,7 @@ class AuthContext {
       print(otp);
 
       final response = await http.post(
-        Uri.parse('$_baseUrlKey/users/verify/'),
+        Uri.parse('$_baseUrl/users/verify/'),
         body: {
           'username': username,
           'email': email,
