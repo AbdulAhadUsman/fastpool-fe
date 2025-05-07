@@ -70,8 +70,9 @@ class ApiClient {
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data);
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final List<dynamic> requests = data['results'] ?? [];
+      return List<Map<String, dynamic>>.from(requests);
     } else {
       throw Exception('Failed to fetch requests: ${response.statusCode}');
     }
@@ -83,7 +84,7 @@ class ApiClient {
       headers: _headers,
     );
 
-    if (response.statusCode != 204) {
+    if (response.statusCode != 204 && response.statusCode != 200) {
       throw Exception('Failed to cancel request: ${response.statusCode}');
     }
   }
